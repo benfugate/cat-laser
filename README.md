@@ -5,7 +5,7 @@ with it likely due to its predictability of just going in circles. I decided to 
 one myself with a Raspberry Pi Zero I had lying around.
 
 Essentially, this tool will move the laser to a random point in a square grid using
-a couple servos to get a PTZ affect. I have it hanging from my ceiling in my living
+a couple servos to get a PTZ effect. I have it hanging from my ceiling in my living
 room, but it can really be set up anywhere.
 
 The PTZ servos and the laser are both 5v and get fed from the Pi, so everything
@@ -13,7 +13,9 @@ operates on one USB power cable.
 
 ### Hardware
 
-- Raspberry Pi <em>[(Amazon)](https://www.adafruit.com/product/3708) </em>
+You can really get this stuff wherever this is just what I got
+
+- Raspberry Pi <em>[(adafruit)](https://www.adafruit.com/product/3708) </em>
   - Any Pi with gpio headers should be fine. I am using a Zero 2 W with GPIO pins I soldered
 - Servos <em>[(Amazon)](https://smile.amazon.com/gp/product/B08PK9N9T4) </em>
   - I bought a camera PTZ mount and taped a laser diode to it
