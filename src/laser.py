@@ -1,3 +1,4 @@
+import os
 import time
 import random
 import numpy as np
@@ -47,7 +48,8 @@ class Laser:
                 tilt = random.randint(self.tilt_range[0], self.tilt_range[1])
                 self.create_laser_path(pan, tilt)
             time.sleep(self.move_delay_seconds)
-
+            if os.path.isfile('/var/www/4led/stop-script'):
+                break
 
 laser = Laser()
 try:
@@ -60,3 +62,5 @@ except KeyboardInterrupt:
     laser.tilt.angle = 11.5
     laser.pan.angle = 110
     print("Goodbye!")
+
+os.system("sudo -u root -S rm /laser/stop-script")

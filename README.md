@@ -36,7 +36,7 @@ There is a small help note outlining the purpose of each variable in the file.
   - `tilt_range`
     
 ### Usage
-> python3 laser.py
+> python3 src/laser.py
 
 Exit the program with `CTRL-C`
 
