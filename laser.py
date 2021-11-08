@@ -53,6 +53,10 @@ laser = Laser()
 try:
     laser.run()
 except KeyboardInterrupt:
+    """
+    These tilt and pan angles put the laser in a place that my cat cant see it, so when I stop
+    the toy the laser is out of the way. When I get a 5v relay, Ill turn off the laser instead.
+    """
     laser.tilt.angle = 11.5
     laser.pan.angle = 110
     print("Goodbye!")
