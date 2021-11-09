@@ -43,13 +43,21 @@ class Laser:
     def run(self):
         print(f"Movement chance:\n    {self.percentage_move_chance*100}% every {self.move_delay_seconds} second")
         while True:
-            if random.random() < self.percentage_move_chance:
-                pan = random.randint(self.pan_range[0], self.pan_range[1])
-                tilt = random.randint(self.tilt_range[0], self.tilt_range[1])
-                self.create_laser_path(pan, tilt)
-            time.sleep(self.move_delay_seconds)
-            if os.path.isfile('/var/www/4led/stop-script'):
-                break
+            on_time = time.time() + 900
+            while time.time() < on_time:
+                if random.random() < self.percentage_move_chance:
+                    pan = random.randint(self.pan_range[0], self.pan_range[1])
+                    tilt = random.randint(self.tilt_range[0], self.tilt_range[1])
+                    self.create_laser_path(pan, tilt)
+                time.sleep(self.move_delay_seconds)
+                if os.path.isfile('/var/www/4led/stop-script'):
+                    break
+
+            laser.tilt.angle = 11.5
+            laser.pan.angle = 110
+            off_time = random.randint(1200, 5400)
+            time.sleep(off_time)
+
 
 laser = Laser()
 try:
