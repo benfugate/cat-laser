@@ -43,10 +43,10 @@ class Laser:
     def run(self):
         print(f"Movement chance:\n    {self.percentage_move_chance*100}% every {self.move_delay_seconds} second")
         while True:
-            if os.path.isfile('/home/pi/cat-laser/src/start-script'):
-                os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
             on_time = time.time() + 900
             while time.time() < on_time:
+                if os.path.isfile('/home/pi/cat-laser/src/start-script'):
+                    os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
                 if random.random() < self.percentage_move_chance:
                     pan = random.randint(self.pan_range[0], self.pan_range[1])
                     tilt = random.randint(self.tilt_range[0], self.tilt_range[1])
@@ -67,7 +67,10 @@ class Laser:
 
 laser = Laser()
 try:
-    laser.run()
+    if not os.path.isfile('/home/pi/cat-laser/src/active'):
+        os.system("sudo -u root -S touch /home/pi/cat-laser/src/active")
+        laser.run()
+        os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
 except KeyboardInterrupt:
     print("Goodbye!")
 
