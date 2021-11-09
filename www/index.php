@@ -5,9 +5,10 @@
 
 <?php
     if(isset($_POST['start'])){
-        system('sudo -u root -S python3 /home/pi/cat-laser/src/stop-script');
+        exec('sudo -u pi /usr/bin/python3 /home/pi/cat-laser/src/laser.py');
+        exec('sudo -u pi touch /home/pi/cat-laser/src/start-script');
     }
     if(isset($_POST['stop'])){
-        system('sudo -u root -S touch /home/pi/cat-laser/src/stop-script');
+        exec('sudo -u pi touch /home/pi/cat-laser/src/stop-script');
     }
 ?>

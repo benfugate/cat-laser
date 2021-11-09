@@ -43,6 +43,8 @@ class Laser:
     def run(self):
         print(f"Movement chance:\n    {self.percentage_move_chance*100}% every {self.move_delay_seconds} second")
         while True:
+            if os.path.isfile('/home/pi/cat-laser/src/start-script'):
+                os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
             on_time = time.time() + 900
             while time.time() < on_time:
                 if random.random() < self.percentage_move_chance:
@@ -51,24 +53,28 @@ class Laser:
                     self.create_laser_path(pan, tilt)
                 time.sleep(self.move_delay_seconds)
                 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
-                    break
-
+                    return
             laser.tilt.angle = 11.5
             laser.pan.angle = 110
-            off_time = random.randint(1200, 5400)
-            time.sleep(off_time)
+            start_time = time.time() + random.randint(1200, 5400)
+            while time.time() < start_time:
+                time.sleep(5)
+                if os.path.isfile('/home/pi/cat-laser/src/start-script'):
+                    break
+            if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
+                return
 
 
 laser = Laser()
 try:
     laser.run()
 except KeyboardInterrupt:
-    """
-    These tilt and pan angles put the laser in a place that my cat cant see it, so when I stop
-    the toy the laser is out of the way. When I get a 5v relay, Ill turn off the laser instead.
-    """
-    laser.tilt.angle = 11.5
-    laser.pan.angle = 110
     print("Goodbye!")
 
+"""
+These tilt and pan angles put the laser in a place that my cat cant see it, so when I stop
+the toy the laser is out of the way. When I get a 5v relay, Ill turn off the laser instead.
+"""
+laser.tilt.angle = 11.5
+laser.pan.angle = 110
 os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
