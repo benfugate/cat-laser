@@ -77,4 +77,5 @@ the toy the laser is out of the way. When I get a 5v relay, Ill turn off the las
 """
 laser.tilt.angle = 11.5
 laser.pan.angle = 110
-os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
+if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
+    os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
