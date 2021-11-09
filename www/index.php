@@ -5,9 +5,9 @@
 
 <?php
     if(isset($_POST['start'])){
-        system('sudo -u root -S python3 /laser/src/laser.py');
+        system('sudo -u root -S python3 /home/pi/cat-laser/src/stop-script');
     }
     if(isset($_POST['stop'])){
-        system('sudo -u root -S touch /laser/stop-script');
+        system('sudo -u root -S touch /home/pi/cat-laser/src/stop-script');
     }
 ?>
