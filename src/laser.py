@@ -71,6 +71,8 @@ try:
         os.system("sudo -u root -S touch /home/pi/cat-laser/src/active")
         laser.run()
         os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
+    else:
+        exit(0)
 except KeyboardInterrupt:
     print("Goodbye!")
 
