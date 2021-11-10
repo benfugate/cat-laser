@@ -1,7 +1,9 @@
+<center>
 <form action="" method="post">
-     <input type="submit" name="start" value="start" />
-     <input type="submit" name="stop" value="stop" />
+     <input type="submit" name="start" value="start" style="height:50%; width:100%" />
+     <input type="submit" name="stop" value="stop" style="height:50%; width:100%" />
 </form>
+</center>
 
 <?php
     if(isset($_POST['start'])){

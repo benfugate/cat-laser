@@ -26,8 +26,8 @@ class Laser:
         self.pan = kit.servo[1]
 
     def create_laser_path(self, pan, tilt):
-        pan_list = np.linspace(self.last_pan, pan, num=30)
-        tilt_list = np.linspace(self.last_tilt, tilt, num=30)
+        pan_list = np.linspace(self.last_pan, pan, num=15)
+        tilt_list = np.linspace(self.last_tilt, tilt, num=15)
         delay = random.uniform(0, 0.1)
         for index in range(len(pan_list)):
             self.move_laser(pan_list[index], tilt_list[index])
