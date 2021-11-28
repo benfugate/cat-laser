@@ -5,8 +5,7 @@ import numpy as np
 from adafruit_servokit import ServoKit
 import RPi.GPIO as GPIO
 
-GPIO.setmode(GPIO.BOARD)
-laser = 11
+laser = 17
 GPIO.setup(laser, GPIO.OUT)
 
 class Laser:
