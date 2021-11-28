@@ -3,7 +3,11 @@ import time
 import random
 import numpy as np
 from adafruit_servokit import ServoKit
+import RPi.GPIO as GPIO
 
+GPIO.setmode(GPIO.BOARD)
+laser = 11
+GPIO.setup(laser, GPIO.OUT)
 
 class Laser:
     def __init__(self):
@@ -54,8 +58,7 @@ class Laser:
                 time.sleep(self.move_delay_seconds)
                 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                     return
-            laser.tilt.angle = 14
-            laser.pan.angle = 110
+            GPIO.output(laser, GPIO.LOW)
             start_time = time.time() + random.randint(1200, 5400)
             while time.time() < start_time:
                 time.sleep(5)
@@ -80,7 +83,6 @@ except KeyboardInterrupt:
 These tilt and pan angles put the laser in a place that my cat cant see it, so when I stop
 the toy the laser is out of the way. When I get a 5v relay, Ill turn off the laser instead.
 """
-laser.tilt.angle = 14
-laser.pan.angle = 110
+GPIO.output(laser, GPIO.LOW)
 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
     os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
