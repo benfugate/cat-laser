@@ -44,7 +44,9 @@ class Laser:
         time.sleep(0.03)  # give servos a chance to move
 
     def run(self):
+        GPIO.output(laser, GPIO.HIGH)
         print(f"Movement chance:\n    {self.percentage_move_chance*100}% every {self.move_delay_seconds} second")
+        time.sleep(3)
         while True:
             on_time = time.time() + 900
             while time.time() < on_time:
