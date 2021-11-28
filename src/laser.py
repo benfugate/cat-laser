@@ -75,6 +75,7 @@ try:
         laser.run()
         os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
     else:
+        GPIO.cleanup()
         exit(0)
 except KeyboardInterrupt:
     print("Goodbye!")
@@ -86,3 +87,4 @@ the toy the laser is out of the way. When I get a 5v relay, Ill turn off the las
 GPIO.output(laser, GPIO.LOW)
 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
     os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
+GPIO.cleanup()
