@@ -77,6 +77,7 @@ try:
         GPIO.cleanup()
         exit(0)
 except KeyboardInterrupt:
+    os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
     print("Goodbye!")
 
 """
