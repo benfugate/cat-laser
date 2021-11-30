@@ -79,14 +79,13 @@ try:
         try:
             laser.run()
         except Exception as e:
-            os.path.isfile('/home/pi/cat-laser/src/active'):
+            if os.path.isfile('/home/pi/cat-laser/src/active'):
                 os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
-            os.path.isfile('/home/pi/cat-laser/src/start-script'):
+            if os.path.isfile('/home/pi/cat-laser/src/start-script'):
                 os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
-            os.path.isfile('/home/pi/cat-laser/src/stop-script'):
+            if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                 os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
             GPIO.output(17, off)
-        os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
     else:
         exit(0)
 except KeyboardInterrupt:
@@ -99,5 +98,9 @@ the toy the laser is out of the way. When I get a 5v relay, Ill turn off the las
 """
 GPIO.output(17, off)
 print("laser off, done")
+if os.path.isfile('/home/pi/cat-laser/src/active'):
+    os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
+if os.path.isfile('/home/pi/cat-laser/src/start-script'):
+    os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
     os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
