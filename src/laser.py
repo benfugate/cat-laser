@@ -58,7 +58,7 @@ class Laser:
                     pan = random.randint(self.pan_range[0], self.pan_range[1])
                     tilt = random.randint(self.tilt_range[0], self.tilt_range[1])
                     self.create_laser_path(pan, tilt)
-                time.sleep(self.move_delay_seconds)
+                #time.sleep(self.move_delay_seconds)
                 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                     return
             GPIO.output(17, off)
