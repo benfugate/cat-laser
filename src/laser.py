@@ -49,6 +49,7 @@ class Laser:
         time.sleep(3)
         while True:
             GPIO.output(17, on)
+            print("turning on")
             on_time = time.time() + 900
             while time.time() < on_time:
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
@@ -61,6 +62,7 @@ class Laser:
                 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                     return
             GPIO.output(17, off)
+            print("turning off for a break")
             start_time = time.time() + random.randint(1200, 5400)
             while time.time() < start_time:
                 time.sleep(5)
@@ -74,8 +76,16 @@ laser = Laser()
 try:
     if not os.path.isfile('/home/pi/cat-laser/src/active'):
         os.system("sudo -u root -S touch /home/pi/cat-laser/src/active")
-        laser.run()
-        os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
+        try:
+            laser.run()
+        except Exception as e:
+            if os.path.isfile('/home/pi/cat-laser/src/active'):
+                os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
+            if os.path.isfile('/home/pi/cat-laser/src/start-script'):
+                os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
+            if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
+                os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
+            GPIO.output(17, off)
     else:
         exit(0)
 except KeyboardInterrupt:
@@ -87,5 +97,10 @@ These tilt and pan angles put the laser in a place that my cat cant see it, so w
 the toy the laser is out of the way. When I get a 5v relay, Ill turn off the laser instead.
 """
 GPIO.output(17, off)
+print("laser off, done")
+if os.path.isfile('/home/pi/cat-laser/src/active'):
+    os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
+if os.path.isfile('/home/pi/cat-laser/src/start-script'):
+    os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
     os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
