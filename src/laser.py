@@ -6,8 +6,8 @@ from adafruit_servokit import ServoKit
 import RPi.GPIO as GPIO
 
 GPIO.setup(17, GPIO.OUT)
-off = 1
-on = 0
+off = 0
+on = 1
 
 class Laser:
     def __init__(self):
