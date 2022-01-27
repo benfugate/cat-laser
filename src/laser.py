@@ -32,9 +32,7 @@ class Laser:
         self.laser_on = 1
 
         GPIO.setup(17, GPIO.OUT)
-        GPIO.output(17, 1)
-        time.sleep(1)
-        GPIO.output(17, 0)
+        GPIO.output(17, self.laser_on)
         time.sleep(1)
 
         kit = ServoKit(channels=16)
