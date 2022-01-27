@@ -12,13 +12,17 @@ class Laser:
     def __init__(self):
         """
         delay_between_movements: how often in seconds the laser will take a chance to move to a new location
+        sleep_time_range: how many seconds (range) that the laser will sleep after running before starting automatically
+        laser_on_time: how many seconds the laser will run when activated, before going to sleep
         percentage_move_chance: percentage chance that the laser will move
         pan_range: angle range that the pan servo will move between
         tilt_range: tilt range that the tilt servo will move between
         """
         self.delay_between_movements = 0
         #self.sleep_time_range = (1200, 5400)
-        self.sleep_time_range = (5, 30)
+        self.sleep_time_range = (5, 10)
+        self.laser_on_time = 5
+
         self.percentage_move_chance = 0.50
         self.pan_range = (0, 120)
         self.tilt_range = (80, 130)
