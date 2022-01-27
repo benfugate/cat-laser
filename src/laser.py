@@ -42,6 +42,16 @@ class Laser:
         self.last_pan = 0
         self.last_tilt = 0
 
+    def turn_laser_on(self):
+        print("turning on")
+        GPIO.output(17, self.laser_on)
+        time.sleep(1)
+
+    def turn_laser_off(self):
+        print("turning off")
+        GPIO.output(17, self.laser_off)
+        time.sleep(1)
+
     def create_laser_path(self, pan, tilt):
         pan_list = np.linspace(self.last_pan, pan, num=15)
         tilt_list = np.linspace(self.last_tilt, tilt, num=15)
@@ -57,12 +67,13 @@ class Laser:
         self.last_tilt = tilt
         time.sleep(0.03)  # give servos a chance to move
 
+
+
     def run(self):
         print(f"Movement chance:\n    {self.percentage_move_chance*100}% every {self.delay_between_movements} second")
         time.sleep(3)
         while True:
-            GPIO.output(17, self.laser_on)
-            print("turning on")
+            self.turn_laser_on()
             on_time = time.time() + self.laser_on_time
             while time.time() < on_time:
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
@@ -74,8 +85,8 @@ class Laser:
                 time.sleep(self.delay_between_movements)
                 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                     return
-            GPIO.output(17, self.laser_off)
             print("turning off for a break")
+            self.turn_laser_off()
             start_time = time.time() + random.randint(self.sleep_time_range[0], self.sleep_time_range[1])
             while time.time() < start_time:
                 time.sleep(5)
@@ -100,7 +111,7 @@ try:
                 os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
             if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                 os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
-            GPIO.output(17, laser.laser_off)
+            laser.turn_laser_off()
 
             # Log error to file
             errors_dir = f'{os.getcwd()}/errors/'
@@ -121,8 +132,7 @@ except KeyboardInterrupt:
     os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
     print("Goodbye!")
 
-GPIO.output(17, laser.laser_off)
-print("laser off, done")
+laser.turn_laser_off()
 if os.path.isfile('/home/pi/cat-laser/src/active'):
     os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
