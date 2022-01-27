@@ -7,9 +7,6 @@ import numpy as np
 import traceback
 from adafruit_servokit import ServoKit
 import RPi.GPIO as GPIO
-GPIO.output(17, 1)
-time.sleep(1)
-GPIO.output(17, 0)
 
 class Laser:
     def __init__(self):
@@ -21,6 +18,7 @@ class Laser:
         pan_range: angle range that the pan servo will move between
         tilt_range: tilt range that the tilt servo will move between
         """
+        # Settings
         self.delay_between_movements = 0
         self.sleep_time_range = (5, 10)  # default: (1200, 5400)
         self.laser_on_time = 5  # default: 900
@@ -29,17 +27,22 @@ class Laser:
         self.pan_range = (0, 120)
         self.tilt_range = (80, 130)
 
-        self.last_pan = 0
-        self.last_tilt = 0
-
-        GPIO.setup(17, GPIO.OUT)
-
+        # Internal values, change at own risk
         self.laser_off = 0
         self.laser_on = 1
+
+        GPIO.setup(17, GPIO.OUT)
+        GPIO.output(17, 1)
+        time.sleep(1)
+        GPIO.output(17, 0)
+        time.sleep(1)
 
         kit = ServoKit(channels=16)
         self.tilt = kit.servo[0]
         self.pan = kit.servo[1]
+
+        self.last_pan = 0
+        self.last_tilt = 0
 
     def create_laser_path(self, pan, tilt):
         pan_list = np.linspace(self.last_pan, pan, num=15)
