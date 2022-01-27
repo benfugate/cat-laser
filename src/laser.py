@@ -63,8 +63,7 @@ class Laser:
         while True:
             GPIO.output(17, self.laser_on)
             print("turning on")
-            while time.time() < (time.time() + laser.laser_on_time):
-                print("here")
+            while time.time() < (time.time() + self.laser_on_time):
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
                     os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
                 if random.random() < self.percentage_move_chance:
@@ -73,7 +72,6 @@ class Laser:
                     self.create_laser_path(pan, tilt)
                 time.sleep(self.delay_between_movements)
                 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
-                    print("stop file found")
                     return
             GPIO.output(17, self.laser_off)
             print("turning off for a break")
@@ -81,10 +79,8 @@ class Laser:
             while time.time() < start_time:
                 time.sleep(5)
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
-                    print("break pint")
                     break
             if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
-                print("stop file found 2")
                 return
 
 
