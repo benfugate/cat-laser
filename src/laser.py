@@ -7,6 +7,9 @@ import numpy as np
 import traceback
 from adafruit_servokit import ServoKit
 import RPi.GPIO as GPIO
+GPIO.output(17, 1)
+time.sleep(1)
+GPIO.output(17, 0)
 
 class Laser:
     def __init__(self):
@@ -30,9 +33,6 @@ class Laser:
         self.last_tilt = 0
 
         GPIO.setup(17, GPIO.OUT)
-        GPIO.output(17, 1)
-        time.sleep(1)
-        GPIO.output(17, 0)
 
         self.laser_off = 0
         self.laser_on = 1
