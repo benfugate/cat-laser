@@ -20,7 +20,7 @@ class Laser:
         """
         self.delay_between_movements = 0
         self.sleep_time_range = (5, 10)  # default: (1200, 5400)
-        self.laser_on_time = 5  # default: 900
+        self.laser_on_time = 10  # default: 900
 
         self.percentage_move_chance = 0.50
         self.pan_range = (0, 120)
