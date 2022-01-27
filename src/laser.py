@@ -53,6 +53,15 @@ class Laser:
         GPIO.output(17, self.laser_off)
         time.sleep(1)
 
+    def cleanup_for_quit(self):
+        self.turn_laser_off()
+        if os.path.isfile('/home/pi/cat-laser/src/active'):
+            os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
+        if os.path.isfile('/home/pi/cat-laser/src/start-script'):
+            os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
+        if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
+            os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
+
     def create_laser_path(self, pan, tilt):
         pan_list = np.linspace(self.last_pan, pan, num=15)
         tilt_list = np.linspace(self.last_tilt, tilt, num=15)
@@ -91,25 +100,20 @@ class Laser:
                 time.sleep(5)
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
                     break
-            if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
-                return
+                if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
+                    return
 
 
 laser = Laser()
 try:
-    if not os.path.isfile('/home/pi/cat-laser/src/active'):
-        os.system("sudo -u root -S touch /home/pi/cat-laser/src/active")
+    if not os.path.isfile('/home/pi/cat-laser/src/active'):  # Check if the laser is already running
         try:
+            os.system("sudo -u root -S touch /home/pi/cat-laser/src/active")
             laser.run()
+            laser.cleanup_for_quit()
         except Exception as e:
             print(e)
-            if os.path.isfile('/home/pi/cat-laser/src/active'):
-                os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
-            if os.path.isfile('/home/pi/cat-laser/src/start-script'):
-                os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
-            if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
-                os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
-            laser.turn_laser_off()
+            laser.cleanup_for_quit()
 
             # Log error to file
             errors_dir = f'{os.getcwd()}/errors/'
@@ -124,16 +128,8 @@ try:
             with open(f"{errors_dir}/exception-{int(time.time())}.txt", "w") as errorfile:
                 e_type, e_val, e_tb = sys.exc_info()
                 traceback.print_exception(e_type, e_val, e_tb, file=errorfile)
-    else:
+    else:  # There is already a laser running, quit
         exit(0)
 except KeyboardInterrupt:
-    os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
+    laser.cleanup_for_quit()
     print("Goodbye!")
-
-laser.turn_laser_off()
-if os.path.isfile('/home/pi/cat-laser/src/active'):
-    os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
-if os.path.isfile('/home/pi/cat-laser/src/start-script'):
-    os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
-if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
-    os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
