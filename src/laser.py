@@ -63,6 +63,7 @@ class Laser:
             GPIO.output(17, self.laser_on)
             print("turning on")
             on_time = time.time() + self.laser_on_time
+            print("here")
             while time.time() < on_time:
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
                     os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
