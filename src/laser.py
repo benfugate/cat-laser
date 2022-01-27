@@ -67,8 +67,6 @@ class Laser:
         self.last_tilt = tilt
         time.sleep(0.03)  # give servos a chance to move
 
-
-
     def run(self):
         print(f"Movement chance:\n    {self.percentage_move_chance*100}% every {self.delay_between_movements} second")
         time.sleep(3)
@@ -85,7 +83,7 @@ class Laser:
                 time.sleep(self.delay_between_movements)
                 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                     return
-            print("turning off for a break")
+            print("taking a break")
             self.turn_laser_off()
             start_time = time.time() + random.randint(self.sleep_time_range[0], self.sleep_time_range[1])
             while time.time() < start_time:
@@ -94,7 +92,6 @@ class Laser:
                     break
             if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                 return
-            on_time = time.time() + self.laser_on_time
 
 
 laser = Laser()
