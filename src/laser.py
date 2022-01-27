@@ -63,6 +63,7 @@ class Laser:
             GPIO.output(17, self.laser_on)
             print("turning on")
             while time.time() < (time.time() + laser.laser_on_time):
+                print("here")
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
                     os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
                 if random.random() < self.percentage_move_chance:
@@ -93,6 +94,7 @@ try:
         try:
             laser.run()
         except Exception as e:
+            print(e)
             if os.path.isfile('/home/pi/cat-laser/src/active'):
                 os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
             if os.path.isfile('/home/pi/cat-laser/src/start-script'):
@@ -100,19 +102,22 @@ try:
             if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                 os.system("sudo -u root -S rm /home/pi/cat-laser/src/stop-script")
             GPIO.output(17, laser.laser_off)
-    else:
-        errors_dir = f'{os.getcwd()}/errors/'
-        if not os.path.exists(errors_dir):
-            os.makedirs(errors_dir)
 
-        list_of_files = os.listdir(errors_dir)
-        full_path = ["{0}/{1}".format(errors_dir, x) for x in list_of_files]
-        if len(list_of_files) == 5:
-            oldest_file = min(full_path, key=os.path.getctime)
-            os.remove(oldest_file)
-        with open(f"{errors_dir}/exception-{int(time.time())}.txt", "w") as errorfile:
-            e_type, e_val, e_tb = sys.exc_info()
-            traceback.print_exception(e_type, e_val, e_tb, file=errorfile)
+            # Log error to file
+            errors_dir = f'{os.getcwd()}/errors/'
+            if not os.path.exists(errors_dir):
+                os.makedirs(errors_dir)
+
+            list_of_files = os.listdir(errors_dir)
+            full_path = ["{0}/{1}".format(errors_dir, x) for x in list_of_files]
+            if len(list_of_files) == 5:
+                oldest_file = min(full_path, key=os.path.getctime)
+                os.remove(oldest_file)
+            with open(f"{errors_dir}/exception-{int(time.time())}.txt", "w") as errorfile:
+                e_type, e_val, e_tb = sys.exc_info()
+                traceback.print_exception(e_type, e_val, e_tb, file=errorfile)
+    else:
+        exit(0)
 except KeyboardInterrupt:
     os.system("sudo -u root -S rm /home/pi/cat-laser/src/active")
     print("Goodbye!")
