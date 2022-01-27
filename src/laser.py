@@ -19,9 +19,8 @@ class Laser:
         tilt_range: tilt range that the tilt servo will move between
         """
         self.delay_between_movements = 0
-        #self.sleep_time_range = (1200, 5400)
-        self.sleep_time_range = (5, 10)
-        self.laser_on_time = 5
+        self.sleep_time_range = (5, 10)  # default: (1200, 5400)
+        self.laser_on_time = 5  # default: 900
 
         self.percentage_move_chance = 0.50
         self.pan_range = (0, 120)
@@ -63,7 +62,7 @@ class Laser:
         while True:
             GPIO.output(17, self.laser_on)
             print("turning on")
-            on_time = time.time() + 900
+            on_time = time.time() + self.laser_on_time
             while time.time() < on_time:
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
                     os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
