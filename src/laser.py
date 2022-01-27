@@ -63,7 +63,8 @@ class Laser:
         while True:
             GPIO.output(17, self.laser_on)
             print("turning on")
-            while time.time() < (time.time() + self.laser_on_time):
+            on_time = time.time() + self.laser_on_time
+            while time.time() < on_time:
                 if os.path.isfile('/home/pi/cat-laser/src/start-script'):
                     os.system("sudo -u root -S rm /home/pi/cat-laser/src/start-script")
                 if random.random() < self.percentage_move_chance:
@@ -82,6 +83,7 @@ class Laser:
                     break
             if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                 return
+            on_time = time.time() + self.laser_on_time
 
 
 laser = Laser()
