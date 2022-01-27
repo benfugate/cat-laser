@@ -18,11 +18,12 @@ You can really get this stuff wherever this is just what I got
 - Raspberry Pi <em>[(adafruit)](https://www.adafruit.com/product/3708) </em>
   - Any Pi with gpio headers should be fine. I am using a Zero 2 W with GPIO pins I soldered
 - Servos <em>[(Amazon)](https://smile.amazon.com/gp/product/B08PK9N9T4) </em>
-  - I bought a camera PTZ mount and taped a laser diode to it
 - Lasers <em>[(Amazon)](https://smile.amazon.com/dp/B071FT9HSV/) </em>
+- 5v Relays <em>[(Amazon)](https://smile.amazon.com/gp/product/B00LW15A4W/) </em>
 
-In the future I am planning to add a 5v relay to turn the laser and servos on and
-off through the python code.
+
+I 3D printed a case that houses the Pi and the relay, and the servos are mounted on top of it.
+I may post these files once I refine it a bit.
 
 ### Software
 
