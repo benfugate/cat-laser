@@ -8,6 +8,7 @@ import traceback
 from adafruit_servokit import ServoKit
 import RPi.GPIO as GPIO
 
+
 class Laser:
     def __init__(self):
         """
