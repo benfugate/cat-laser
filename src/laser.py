@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import random
+import argparse
 import numpy as np
 import traceback
 from adafruit_servokit import ServoKit
@@ -10,7 +11,7 @@ import RPi.GPIO as GPIO
 
 
 class Laser:
-    def __init__(self):
+    def __init__(self, args):
         """
         delay_between_movements: how often in seconds the laser will take a chance to move to a new location
         sleep_time_range: how many seconds (range) that the laser will sleep after running before starting automatically
@@ -28,6 +29,11 @@ class Laser:
         self.percentage_move_chance = 0.50
         self.pan_range = (50, 170)
         self.tilt_range = (30, 75)
+
+        # Args
+        parser = argparse.ArgumentParser(description="Automatic cat laser toy")
+        parser.add_argument('--manual', action='store_true', help="manually enter values for movement to tune laser")
+        self.tool_args, self.uk_args = parser.parse_known_args(args=args)
 
         # Internal values, change at own risk
         self.laser_off = 0
@@ -80,7 +86,19 @@ class Laser:
         self.last_tilt = tilt
         time.sleep(0.03)  # give servos a chance to move
 
+    def manual_control(self):
+        userin = input("pan,tilt: ").split(",")
+        while str(userin[0]).lower != "q":
+            try:
+                self.move_laser(int(userin[0]), int(userin[1]))
+                userin = input("pan,tilt: ").split(",")
+            except Exception as e:
+                pass
+
     def run(self):
+        if self.tool_args.manual:
+            self.manual_control()
+            return
         print(f"Movement chance:\n    {self.percentage_move_chance*100}% every {self.delay_between_movements} second")
         time.sleep(3)
         while True:
@@ -106,33 +124,33 @@ class Laser:
                 if os.path.isfile('/home/pi/cat-laser/src/stop-script'):
                     return
 
+if __name__ == "__main__":
+    laser = Laser(sys.argv[1:])
+    try:
+        if not os.path.isfile('/home/pi/cat-laser/src/active'):  # Check if the laser is already running
+            try:
+                os.system("sudo -u root -S touch /home/pi/cat-laser/src/active")
+                laser.run()
+                laser.cleanup_for_quit()
+            except Exception as e:
+                print(e)
+                laser.cleanup_for_quit()
 
-laser = Laser()
-try:
-    if not os.path.isfile('/home/pi/cat-laser/src/active'):  # Check if the laser is already running
-        try:
-            os.system("sudo -u root -S touch /home/pi/cat-laser/src/active")
-            laser.run()
-            laser.cleanup_for_quit()
-        except Exception as e:
-            print(e)
-            laser.cleanup_for_quit()
+                # Log error to file
+                errors_dir = f'{os.getcwd()}/errors/'
+                if not os.path.exists(errors_dir):
+                    os.makedirs(errors_dir)
 
-            # Log error to file
-            errors_dir = f'{os.getcwd()}/errors/'
-            if not os.path.exists(errors_dir):
-                os.makedirs(errors_dir)
-
-            list_of_files = os.listdir(errors_dir)
-            full_path = ["{0}/{1}".format(errors_dir, x) for x in list_of_files]
-            if len(list_of_files) == 5:
-                oldest_file = min(full_path, key=os.path.getctime)
-                os.remove(oldest_file)
-            with open(f"{errors_dir}/exception-{int(time.time())}.txt", "w") as errorfile:
-                e_type, e_val, e_tb = sys.exc_info()
-                traceback.print_exception(e_type, e_val, e_tb, file=errorfile)
-    else:  # There is already a laser running, quit
-        exit(0)
-except KeyboardInterrupt:
-    laser.cleanup_for_quit()
-    print("Goodbye!")
+                list_of_files = os.listdir(errors_dir)
+                full_path = ["{0}/{1}".format(errors_dir, x) for x in list_of_files]
+                if len(list_of_files) == 5:
+                    oldest_file = min(full_path, key=os.path.getctime)
+                    os.remove(oldest_file)
+                with open(f"{errors_dir}/exception-{int(time.time())}.txt", "w") as errorfile:
+                    e_type, e_val, e_tb = sys.exc_info()
+                    traceback.print_exception(e_type, e_val, e_tb, file=errorfile)
+        else:  # There is already a laser running, quit
+            exit(0)
+    except KeyboardInterrupt:
+        laser.cleanup_for_quit()
+        print("Goodbye!")
