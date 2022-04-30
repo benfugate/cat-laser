@@ -20,13 +20,14 @@ class Laser:
         tilt_range: tilt range that the tilt servo will move between
         """
         # Settings
-        self.delay_between_movements = 0
+        self.delay_between_movements = 1
         self.sleep_time_range = (1200, 5400)  # default: (1200, 5400)
         self.laser_on_time = 900  # default: 900
+        self.counter = 0
 
         self.percentage_move_chance = 0.50
-        self.pan_range = (0, 120)
-        self.tilt_range = (80, 130)
+        self.pan_range = (50, 170)
+        self.tilt_range = (30, 75)
 
         # Internal values, change at own risk
         self.laser_off = 0
@@ -68,6 +69,8 @@ class Laser:
         delay = random.uniform(0, 0.1)
         for index in range(len(pan_list)):
             self.move_laser(pan_list[index], tilt_list[index])
+            self.counter += 1
+            print(f"Moving... {self.counter}")
             time.sleep(delay)
 
     def move_laser(self, pan, tilt):
