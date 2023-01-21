@@ -23,6 +23,7 @@ class ControlPower:
 
     def set_power(self, power):
         self._power = power
+        print(f"Power set to {power.get_power()}")
 
 
 class Laser:
