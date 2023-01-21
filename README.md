@@ -48,12 +48,3 @@ specified at the bottom of laser.py. This can be modified to suit your own needs
 
 Running in this mode will allow the user to input a "pan, tilt" value to see where the laser will land.
 This should help the user tune where the laser should land in their own space.
-
-### Web UI
-
-I set up a simple web UI on my Raspberry Pi Zero 2 so that I could enable/disable the script easily from my phone.
-
-The requirements can be installed by running the `setup_web_control.sh` script. Then place the contents of `./www/` in the `/var/www/html` directory. The page should be accessable when you visit your server/pi's IP address in a web browser.
-
-Note: The included `index.php` file expects this repository to be present in `/home/pi/cat-laser/`.
-If it is stored somewhere different, the paths to your `laser.py` file should be modified in `index.php`.
