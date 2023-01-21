@@ -5,10 +5,10 @@ import sys
 import time
 import traceback
 from flask import Flask, render_template, request
-from src.laser import Laser, ControlPower
+from src.laser import Laser
+from src.power import power
 
 app = Flask(__name__)
-power = ControlPower(0)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -17,18 +17,18 @@ def index():
         if request.form.get('start') == 'start':
             if power.get_power() == 1:
                 # Already running
-                if power.get_power() == 2:
-                    power.set_power(1)
                 pass
+            elif power.get_power() == 2:
+                power.set_power(1)
             else:
                 power.set_power(1)
-                laser = Laser([], power)
+                laser = Laser([])
 
                 try:
                     laser.run()
                 except Exception as e:
                     print(e)
-                    laser.cleanup_for_quit()
+                    laser.turn_laser_off()
                     if type(e).__name__ != KeyboardInterrupt:
                         # Log error to file
                         errors_dir = f'{os.getcwd()}/errors/'

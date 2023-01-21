@@ -7,27 +7,11 @@ import argparse
 import numpy as np
 from adafruit_servokit import ServoKit
 import RPi.GPIO as GPIO
-
-
-class ControlPower:
-    """
-    0 = off
-    1 = on
-    2 = paused for break
-    """
-    def __init__(self, power):
-        self._power = power
-
-    def get_power(self):
-        return self._power
-
-    def set_power(self, power):
-        self._power = power
-        print(f"Power set to {power.get_power()}")
+from src.power import power
 
 
 class Laser:
-    def __init__(self, args, power):
+    def __init__(self, args):
         """
         delay_between_movements: how often in seconds the laser will take a chance to move to a new location
         sleep_time_range: how many seconds (range) that the laser will sleep after running before starting automatically
@@ -37,7 +21,6 @@ class Laser:
         tilt_range: tilt range that the tilt servo will move between
         """
         # Settings
-        self.power = power
         self.delay_between_movements = 1
         self.sleep_time_range = (1200, 5400)  # default: (1200, 5400)
         self.laser_on_time = 900  # default: 900
@@ -77,9 +60,6 @@ class Laser:
         GPIO.output(17, self.laser_off)
         time.sleep(1)
 
-    def cleanup_for_quit(self):
-        self.turn_laser_off()
-
     def create_laser_path(self, pan, tilt):
         pan_list = np.linspace(self.last_pan, pan, num=15)
         tilt_list = np.linspace(self.last_tilt, tilt, num=15)
@@ -109,14 +89,14 @@ class Laser:
 
     def pause_for_break(self, start_time):
         self.turn_laser_off()
-        self.power.set_power = 2
+        power.set_power(2)
         while time.time() < start_time:
             time.sleep(5)
-            if self.power.get_power == 1:
+            if power.get_power() == 1:
                 break
-            if self.power.get_power == 0:
+            if power.get_power() == 0:
                 return
-        self.power.get_power = 1
+        power.set_power(1)
 
     def run(self):
         if self.tool_args.manual:
@@ -133,7 +113,8 @@ class Laser:
                     tilt = random.randint(self.tilt_range[0], self.tilt_range[1])
                     self.create_laser_path(pan, tilt)
                 time.sleep(self.delay_between_movements)
-                if self.power.get_power == 0:
+                if power.get_power() == 0:
+                    self.turn_laser_off()
                     return
             print("taking a break")
             start_time = time.time() + random.randint(self.sleep_time_range[0], self.sleep_time_range[1])
@@ -141,5 +122,5 @@ class Laser:
 
 
 if __name__ == "__main__":
-    laser = Laser(sys.argv[1:], ControlPower(1))
+    laser = Laser(sys.argv[1:])
     laser.run()
