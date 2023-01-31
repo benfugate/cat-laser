@@ -1,6 +1,8 @@
-#!/usr/bin/env python3
+#!/bin/python3
 
+import os
 import sys
+import json
 import time
 import random
 import argparse
@@ -13,20 +15,18 @@ from src.power import power
 class Laser:
     def __init__(self, args):
         """
-        delay_between_movements: how often in seconds the laser will take a chance to move to a new location
         sleep_time_range: how many seconds (range) that the laser will sleep after running before starting automatically
         laser_on_time: how many seconds the laser will run when activated, before going to sleep
-        percentage_move_chance: percentage chance that the laser will move
         pan_range: angle range that the pan servo will move between
         tilt_range: tilt range that the tilt servo will move between
         """
         # Settings
-        self.sleep_time_range = (1200, 5400)  # default: (1200, 5400)
-        self.laser_on_time = 900  # default: 900
-        self.counter = 0
-
-        self.pan_range = (50, 170)
-        self.tilt_range = (30, 75)
+        with open(f"{os.path.dirname(os.path.realpath(__file__))}/config.json") as f:
+            config = json.load(f)
+        self.sleep_time_range = config["sleep_time_range"]
+        self.laser_on_time = config["laser_on_time"]
+        self.pan_range = (config["min_pan"], config["max_pan"])
+        self.tilt_range = (config["min_tilt"], config["max_tilt"])
 
         # Args
         parser = argparse.ArgumentParser(description="Automatic cat laser toy")
@@ -47,6 +47,8 @@ class Laser:
 
         self.last_pan = 0
         self.last_tilt = 0
+
+        self.counter = 0
 
     def turn_laser_on(self):
         print("turning on")
