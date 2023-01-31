@@ -1,0 +1,8 @@
+{
+  "min_pan": 50,
+  "max_pan": 170,
+  "min_tilt": 30,
+  "max_tilt": 75,
+  "sleep_time_range": [1200, 5400],
+  "laser_on_time": 900
+}

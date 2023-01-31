@@ -1,6 +1,27 @@
-<center>
-<form method="post" action="/">
-     <input type="submit" name="start" value="start" style="height:50%; width:100%; font-size: 32px;" />
-     <input type="submit" name="stop" value="stop" style="height:50%; width:100%; font-size: 32px;" />
-</form>
-</center>
+<div style="text-align: center;">
+     <form method="post" action="/">
+          <input type="submit" name="start" value="start" style="height:40%; width:100%; font-size: 32px;" />
+          <input type="submit" name="stop" value="stop" style="height:40%; width:100%; font-size: 32px;" />
+          <table style="width: 100%; table-layout: fixed;">
+               <tr>
+                    <td>
+                         <div style="margin-left: auto; margin-right: auto; text-align: center;">
+                              <p>Speed</p>
+                              <input name="speed" type="range" min="0" max="10" value="{{ speed }}" style="height:10%; width:50%;">
+                         </div>
+                         <div style="margin-left: auto; margin-right: auto; text-align: center;">
+                              <p>Delay Between Movements</p>
+                              <input name="delay" type="range" min="0" max="3" value="{{ delay }}" style="height:10%; width:50%;">
+                         </div>
+                         <div style="margin-left: auto; margin-right: auto; text-align: center;">
+                              <p>Number of Line Points</p>
+                              <input name="points" type="range" min="5" max="30" value="{{ points }}" style="height:10%; width:50%;">
+                         </div>
+                    </td>
+                    <td>
+                         <input type="submit" value="submit" style="height:100px; width:75%; text-align: center;"/>
+                    </td>
+               </tr>
+          </table>
+     </form>
+</div>

@@ -45,8 +45,18 @@ def index():
                             traceback.print_exception(e_type, e_val, e_tb, file=errorfile)
         elif request.form.get('stop') == 'stop':
             power.set_power(0)
-    return render_template('index.html')
+        elif request.method == "POST":
+            if int(request.form['speed']) == 0:
+                power.set_percentage_move_chance(0)
+            else:
+                power.set_percentage_move_chance(int(request.form['speed'])/10)
+            power.set_delay_between_movements(int(request.form['delay']))
+            power.set_num_points(int(request.form['points']))
+    return render_template('index.html',
+                           speed=power.percentage_move_chance*10,
+                           delay=power.delay_between_movements,
+                           points=power.num_points)
 
 
 if __name__ == '__main__':
-    app.run(host='192.168.29.84', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)
