@@ -43,8 +43,23 @@ class Laser:
         time.sleep(1)
 
         kit = ServoKit(channels=16)
-        self.tilt = kit.servo[0]
-        self.pan = kit.servo[1]
+        tilt_channel = config.get("tilt_channel", 0)
+        pan_channel = config.get("pan_channel", 1)
+        self.tilt = kit.servo[tilt_channel]
+        self.pan = kit.servo[pan_channel]
+        # Optional per-servo calibration
+        tmin, tmax = config.get("tilt_pulse_min"), config.get("tilt_pulse_max")
+        pmin, pmax = config.get("pan_pulse_min"), config.get("pan_pulse_max")
+        if tmin and tmax:
+            try:
+                self.tilt.set_pulse_width_range(int(tmin), int(tmax))
+            except Exception:
+                pass
+        if pmin and pmax:
+            try:
+                self.pan.set_pulse_width_range(int(pmin), int(pmax))
+            except Exception:
+                pass
 
         self.last_pan = 0
         self.last_tilt = 0

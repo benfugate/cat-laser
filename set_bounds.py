@@ -16,9 +16,27 @@ class SetBounds:
         with open("src/config.json") as f:
             self.config = json.load(f)
         kit = ServoKit(channels=16)
-        self.tilt = kit.servo[0]
-        self.pan = kit.servo[1]
-        self.move_laser(110, self.config["min_tilt"])
+        tilt_channel = self.config.get("tilt_channel", 0)
+        pan_channel = self.config.get("pan_channel", 1)
+        print(f"Using channels -> pan:{pan_channel}, tilt:{tilt_channel}")
+        self.tilt = kit.servo[tilt_channel]
+        self.pan = kit.servo[pan_channel]
+        # Optional per-servo calibration
+        tmin, tmax = self.config.get("tilt_pulse_min"), self.config.get("tilt_pulse_max")
+        pmin, pmax = self.config.get("pan_pulse_min"), self.config.get("pan_pulse_max")
+        try:
+            if tmin and tmax:
+                self.tilt.set_pulse_width_range(int(tmin), int(tmax))
+        except Exception:
+            pass
+        try:
+            if pmin and pmax:
+                self.pan.set_pulse_width_range(int(pmin), int(pmax))
+        except Exception:
+            pass
+        # Move to a safe starting position
+        tilt_middle = (self.config["min_tilt"] + self.config["max_tilt"]) / 2
+        self.move_laser(110, tilt_middle)
 
     def move_laser(self, pan, tilt):
         try:
