@@ -1,3 +1,4 @@
 flask
 numpy
 adafruit-circuitpython-servokit
+RPi.GPIO
