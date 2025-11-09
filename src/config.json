@@ -4,5 +4,13 @@
   "min_tilt": 30,
   "max_tilt": 75,
   "sleep_time_range": [1200, 5400],
-  "laser_on_time": 900
+  "laser_on_time": 900,
+
+  "tilt_channel": 0,
+  "pan_channel": 1,
+
+  "tilt_pulse_min": null,
+  "tilt_pulse_max": null,
+  "pan_pulse_min": null,
+  "pan_pulse_max": null
 }

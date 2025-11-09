@@ -87,6 +87,17 @@ class Laser:
             time.sleep(delay)
 
     def move_laser(self, pan, tilt):
+        # Clamp and coerce to valid range and int to avoid out-of-range errors
+        try:
+            pan = int(round(float(pan)))
+            tilt = int(round(float(tilt)))
+        except Exception:
+            # Fallback if conversion fails
+            pan = 90
+            tilt = 90
+        pan = max(0, min(180, pan))
+        tilt = max(0, min(180, tilt))
+
         self.tilt.angle = tilt
         self.pan.angle = pan
         self.last_pan = pan
