@@ -48,11 +48,21 @@ def index():
         elif request.form.get('stop') == 'stop':
             power.set_power(0)
         else:
-            # Update settings
-            speed_val = int(request.form.get('speed', 0))
-            delay_val = int(request.form.get('delay', power.delay_between_movements))
-            points_val = int(request.form.get('points', power.num_points))
-            if speed_val == 0:
+            # Update settings with robust parsing (handle '5.0' etc.)
+            def parse_int(value, fallback):
+                try:
+                    if value is None:
+                        return int(fallback)
+                    return int(float(value))
+                except Exception:
+                    return int(fallback)
+
+            current_speed = int(power.percentage_move_chance * 10)
+            speed_val = parse_int(request.form.get('speed'), current_speed)
+            delay_val = parse_int(request.form.get('delay'), power.delay_between_movements)
+            points_val = parse_int(request.form.get('points'), power.num_points)
+
+            if speed_val <= 0:
                 power.set_percentage_move_chance(0)
             else:
                 power.set_percentage_move_chance(speed_val/10)
