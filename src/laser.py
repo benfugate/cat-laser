@@ -37,6 +37,7 @@ class Laser:
         self.laser_off = 0
         self.laser_on = 1
 
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(17, GPIO.OUT)
         GPIO.output(17, self.laser_on)
         time.sleep(1)
@@ -79,13 +80,17 @@ class Laser:
 
     def manual_control(self):
         print("enter 'q' to quit")
-        userin = input("pan,tilt: ").split(",")
-        while str(userin[0]).lower != "q":
+        while True:
             try:
-                self.move_laser(int(userin[0]), int(userin[1]))
-                userin = input("pan,tilt: ").split(",")
+                userin = input("pan,tilt: ")
+                if userin.strip().lower() == 'q':
+                    break
+                pan_str, tilt_str = userin.split(",")
+                self.move_laser(int(pan_str), int(tilt_str))
+            except ValueError:
+                print("Invalid input. Use format: pan,tilt or 'q' to quit")
             except Exception as e:
-                pass
+                print(f"Error: {e}")
 
     def pause_for_break(self, start_time):
         self.turn_laser_off()
@@ -115,6 +120,10 @@ class Laser:
                 time.sleep(power.delay_between_movements)
                 if power.get_power() == 0:
                     self.turn_laser_off()
+                    try:
+                        GPIO.cleanup()
+                    except Exception:
+                        pass
                     return
             print("taking a break")
             start_time = time.time() + random.randint(self.sleep_time_range[0], self.sleep_time_range[1])

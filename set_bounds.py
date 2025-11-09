@@ -8,6 +8,7 @@ import RPi.GPIO as GPIO
 
 class SetBounds:
     def __init__(self):
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(17, GPIO.OUT)
         GPIO.output(17, 1)
         time.sleep(1)
@@ -25,7 +26,7 @@ class SetBounds:
             self.tilt.angle = tilt
             time.sleep(0.03)  # give servos a chance to move
         except ValueError:
-            print("[ERROR] Laser andle defined beyond the possible angle, go back to a valid value")
+            print("[ERROR] Laser angle defined beyond the possible angle, go back to a valid value")
 
     def set_bound_value(self, bound_option, entry):
         if entry == "+":
@@ -66,6 +67,10 @@ class SetBounds:
 
         # Save and exit
         GPIO.output(17, 0)
+        try:
+            GPIO.cleanup()
+        except Exception:
+            pass
         print("Done!")
 
 

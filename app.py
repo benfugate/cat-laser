@@ -5,7 +5,7 @@ import sys
 import time
 import traceback
 from flask import Flask, render_template, request
-from src.laser import Laser
+from threading import Thread
 from src.power import power
 
 app = Flask(__name__)
@@ -19,13 +19,15 @@ def index():
                 # Already running
                 pass
             elif power.get_power() == 2:
+                # Resume from break without spawning a duplicate thread
                 power.set_power(1)
             else:
+                # Turn on and start laser in background thread
                 power.set_power(1)
+                from src.laser import Laser  # lazy import so app can run without RPi libs until needed
                 laser = Laser([])
-
                 try:
-                    laser.run()
+                    Thread(target=laser.run, daemon=True).start()
                 except Exception as e:
                     print(e)
                     laser.turn_laser_off()
@@ -45,13 +47,17 @@ def index():
                             traceback.print_exception(e_type, e_val, e_tb, file=errorfile)
         elif request.form.get('stop') == 'stop':
             power.set_power(0)
-        elif request.method == "POST":
-            if int(request.form['speed']) == 0:
+        else:
+            # Update settings
+            speed_val = int(request.form.get('speed', 0))
+            delay_val = int(request.form.get('delay', power.delay_between_movements))
+            points_val = int(request.form.get('points', power.num_points))
+            if speed_val == 0:
                 power.set_percentage_move_chance(0)
             else:
-                power.set_percentage_move_chance(int(request.form['speed'])/10)
-            power.set_delay_between_movements(int(request.form['delay']))
-            power.set_num_points(int(request.form['points']))
+                power.set_percentage_move_chance(speed_val/10)
+            power.set_delay_between_movements(delay_val)
+            power.set_num_points(points_val)
     return render_template('index.html',
                            speed=power.percentage_move_chance*10,
                            delay=power.delay_between_movements,
