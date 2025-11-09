@@ -40,9 +40,10 @@ class SetBounds:
 
     def move_laser(self, pan, tilt):
         try:
+            print(f"[DEBUG] move_laser: pan={pan}, tilt={tilt}")
             self.pan.angle = pan
             self.tilt.angle = tilt
-            time.sleep(0.03)  # give servos a chance to move
+            time.sleep(0.2)  # give servos a chance to move
         except ValueError:
             print("[ERROR] Laser angle defined beyond the possible angle, go back to a valid value")
 
