@@ -1,0 +1,23 @@
+# Example systemd unit for Cat Laser
+# Copy to /etc/systemd/system/cat-laser.service then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable cat-laser.service
+#   sudo systemctl start cat-laser.service
+# Check status/logs:
+#   systemctl status cat-laser.service
+#   journalctl -u cat-laser.service -f
+
+[Unit]
+Description=Cat Laser
+After=network.target
+
+[Service]
+# Optionally run as a specific user (uncomment both lines below if desired)
+#User=pi
+#Group=pi
+WorkingDirectory=/home/pi/cat-laser/
+ExecStart=/usr/bin/python3 /home/pi/cat-laser/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -28,23 +28,51 @@ I may post these files once I refine it a bit.
 ### Software
 
 - Depends on Python 3
-- Run `pip install -r requirements.txt` to install required pip packages
-- Open <b>laser.py</b> and change the following variables to suit your own needs.
-There is a small help note outlining the purpose of each variable in the file.
-  - `move_delay_seconds`
-  - `percentage_move_chance`
-  - `pan_range`
-  - `tilt_range`
+- Install pip packages: `pip install -r requirements.txt`
 
-### Usage
+### Web UI
+- Start the Flask app:
+  - `python3 app.py`
+- Open `http://<pi-ip>:5000`
+- Controls:
+  - Start / Stop buttons
+  - Sliders for Speed, Delay Between Movements, Number of Line Points
+  - Sliders show current values and auto-save changes (no Apply needed)
+
+API:
+- `GET /api/settings` -> `{ speed, delay, points, power }`
+- `POST /api/settings` with JSON subset of `{ speed, delay, points }` to update immediately
+
+### Diagnostics
+- Servo sweep test:
+  - `python3 src/servo_test.py`
+- Interactive bounds:
+  - `python3 set_bounds.py`
+- Configuration (src/config.json):
+  - `tilt_channel`, `pan_channel`
+  - Optional: `*_pulse_min`, `*_pulse_max`
+
+### Systemd service (recommended on Raspberry Pi)
+- Example unit in `contrib/cat-laser.service`.
+- Install/update:
+  - `sudo cp contrib/cat-laser.service /etc/systemd/system/cat-laser.service`
+  - `sudo systemctl daemon-reload`
+  - `sudo systemctl enable cat-laser.service`
+- Start/stop/restart/status:
+  - `sudo systemctl start cat-laser.service`
+  - `sudo systemctl stop cat-laser.service`
+  - `sudo systemctl restart cat-laser.service`
+  - `systemctl status cat-laser.service`
+- Logs:
+  - `journalctl -u cat-laser.service -f`
+- Update and restart after pulling new code:
+  - `cd /home/pi/cat-laser && git pull --ff-only && sudo systemctl restart cat-laser.service`
+
+### CLI modes
 > python3 src/laser.py
 
-Exit the program with `CTRL-C`
-
-When exited, the program will move the laser to a specified hardcoded location
-specified at the bottom of laser.py. This can be modified to suit your own needs.
+Exit with `CTRL-C`.
 
 > python3 src/laser.py --manual
 
-Running in this mode will allow the user to input a "pan, tilt" value to see where the laser will land.
-This should help the user tune where the laser should land in their own space.
+Enter pan,tilt values (e.g., `110,30`) and `q` to quit. This helps tune ranges.
