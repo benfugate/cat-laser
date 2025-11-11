@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import traceback
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from threading import Thread
 from src.power import power
 
@@ -72,6 +72,54 @@ def index():
                            speed=power.percentage_move_chance*10,
                            delay=power.delay_between_movements,
                            points=power.num_points)
+
+
+@app.route('/api/settings', methods=['GET', 'POST'])
+def api_settings():
+    if request.method == 'GET':
+        return jsonify({
+            'speed': int(power.percentage_move_chance * 10),
+            'delay': int(power.delay_between_movements),
+            'points': int(power.num_points),
+            'power': power.get_power(),
+        })
+
+    data = request.get_json(silent=True) or {}
+
+    def parse_int(value, fallback):
+        try:
+            return int(float(value))
+        except Exception:
+            return int(fallback)
+
+    updated = {}
+
+    if 'speed' in data:
+        speed_val = parse_int(data.get('speed'), int(power.percentage_move_chance * 10))
+        if speed_val <= 0:
+            power.set_percentage_move_chance(0)
+        else:
+            power.set_percentage_move_chance(speed_val/10)
+        updated['speed'] = int(power.percentage_move_chance * 10)
+
+    if 'delay' in data:
+        delay_val = parse_int(data.get('delay'), power.delay_between_movements)
+        power.set_delay_between_movements(delay_val)
+        updated['delay'] = int(power.delay_between_movements)
+
+    if 'points' in data:
+        points_val = parse_int(data.get('points'), power.num_points)
+        power.set_num_points(points_val)
+        updated['points'] = int(power.num_points)
+
+    return jsonify({
+        'ok': True,
+        'updated': updated,
+        'speed': int(power.percentage_move_chance * 10),
+        'delay': int(power.delay_between_movements),
+        'points': int(power.num_points),
+        'power': power.get_power(),
+    })
 
 
 if __name__ == '__main__':

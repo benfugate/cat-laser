@@ -5,39 +5,123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cat Laser Control</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <style>
+    .value-badge { min-width: 3rem; display: inline-block; text-align: right; }
+  </style>
 </head>
 <body class="bg-light">
   <div class="container py-4">
     <h1 class="mb-4">Cat Laser Control</h1>
-    <form method="post" action="/">
-      <div class="row g-3">
-        <div class="col-12 col-md-8">
-          <div class="card">
-            <div class="card-body">
-              <div class="mb-3">
-                <label for="speed" class="form-label">Speed: <strong>{{ speed|int }}</strong></label>
-                <input id="speed" name="speed" class="form-range" type="range" min="0" max="10" value="{{ speed }}">
-              </div>
-              <div class="mb-3">
-                <label for="delay" class="form-label">Delay Between Movements: <strong>{{ delay }}</strong></label>
-                <input id="delay" name="delay" class="form-range" type="range" min="0" max="3" value="{{ delay }}">
-              </div>
-              <div class="mb-3">
-                <label for="points" class="form-label">Number of Line Points: <strong>{{ points }}</strong></label>
-                <input id="points" name="points" class="form-range" type="range" min="5" max="30" value="{{ points }}">
-              </div>
-              <button type="submit" class="btn btn-primary">Apply settings</button>
+
+    <div class="row g-3">
+      <div class="col-12 col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="speed" class="form-label">Speed: <span id="speedVal" class="badge bg-secondary value-badge">{{ speed|int }}</span></label>
+              <input id="speed" name="speed" class="form-range" type="range" min="0" max="10" value="{{ speed }}">
+              <div class="form-text">Higher values increase how often the laser moves.</div>
             </div>
+            <div class="mb-3">
+              <label for="delay" class="form-label">Delay Between Movements: <span id="delayVal" class="badge bg-secondary value-badge">{{ delay }}</span></label>
+              <input id="delay" name="delay" class="form-range" type="range" min="0" max="3" value="{{ delay }}">
+            </div>
+            <div class="mb-3">
+              <label for="points" class="form-label">Number of Line Points: <span id="pointsVal" class="badge bg-secondary value-badge">{{ points }}</span></label>
+              <input id="points" name="points" class="form-range" type="range" min="5" max="30" value="{{ points }}">
+            </div>
+            <div id="status" class="text-muted small">Settings update automatically.</div>
           </div>
         </div>
-        <div class="col-12 col-md-4 d-grid gap-2 align-content-start">
-          <button type="submit" name="start" value="start" class="btn btn-success btn-lg">Start</button>
-          <button type="submit" name="stop" value="stop" class="btn btn-danger btn-lg">Stop</button>
-        </div>
       </div>
-    </form>
+
+      <div class="col-12 col-md-4 d-grid gap-2 align-content-start">
+        <form method="post" action="/">
+          <button type="submit" name="start" value="start" class="btn btn-success btn-lg">Start</button>
+        </form>
+        <form method="post" action="/">
+          <button type="submit" name="stop" value="stop" class="btn btn-danger btn-lg">Stop</button>
+        </form>
+      </div>
+    </div>
+
     <footer class="text-muted small mt-4">No external CDN. Bootstrap assets served locally.</footer>
   </div>
+
+  <script>
+    (function() {
+      const speedEl = document.getElementById('speed');
+      const delayEl = document.getElementById('delay');
+      const pointsEl = document.getElementById('points');
+      const speedValEl = document.getElementById('speedVal');
+      const delayValEl = document.getElementById('delayVal');
+      const pointsValEl = document.getElementById('pointsVal');
+      const statusEl = document.getElementById('status');
+
+      let timer = null;
+      function renderValues(s, d, p) {
+        speedValEl.textContent = parseInt(s);
+        delayValEl.textContent = parseInt(d);
+        pointsValEl.textContent = parseInt(p);
+      }
+      function getValues() {
+        return {
+          speed: parseInt(speedEl.value),
+          delay: parseInt(delayEl.value),
+          points: parseInt(pointsEl.value)
+        };
+      }
+      function setValues(data) {
+        if (typeof data.speed !== 'undefined') speedEl.value = data.speed;
+        if (typeof data.delay !== 'undefined') delayEl.value = data.delay;
+        if (typeof data.points !== 'undefined') pointsEl.value = data.points;
+        renderValues(speedEl.value, delayEl.value, pointsEl.value);
+      }
+      function setStatus(msg, ok=true) {
+        statusEl.textContent = msg;
+        statusEl.className = 'small ' + (ok ? 'text-muted' : 'text-danger');
+      }
+      async function pushSettings() {
+        const body = JSON.stringify(getValues());
+        try {
+          const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          setValues(data);
+          setStatus('Settings saved');
+        } catch (e) {
+          setStatus('Failed to save settings: ' + e.message, false);
+        }
+      }
+      function scheduleUpdate() {
+        setStatus('Saving...');
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(pushSettings, 200);
+      }
+
+      ['input', 'change'].forEach(evt => {
+        speedEl.addEventListener(evt, () => { renderValues(speedEl.value, delayEl.value, pointsEl.value); scheduleUpdate(); });
+        delayEl.addEventListener(evt, () => { renderValues(speedEl.value, delayEl.value, pointsEl.value); scheduleUpdate(); });
+        pointsEl.addEventListener(evt, () => { renderValues(speedEl.value, delayEl.value, pointsEl.value); scheduleUpdate(); });
+      });
+
+      // Initialize from server (in case defaults changed on backend)
+      (async () => {
+        try {
+          const res = await fetch('/api/settings');
+          if (res.ok) {
+            const data = await res.json();
+            setValues(data);
+            setStatus('Ready');
+          }
+        } catch (_) { /* ignore */ }
+      })();
+    })();
+  </script>
   <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 </body>
 </html>
