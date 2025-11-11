@@ -23,10 +23,18 @@ class Laser:
         # Settings
         with open(f"{os.path.dirname(os.path.realpath(__file__))}/config.json") as f:
             config = json.load(f)
-        self.sleep_time_range = config["sleep_time_range"]
-        self.laser_on_time = config["laser_on_time"]
+        # Initialize ranges
         self.pan_range = (config["min_pan"], config["max_pan"])
         self.tilt_range = (config["min_tilt"], config["max_tilt"])
+        # Initialize timer settings into power so they are configurable at runtime
+        try:
+            from src.power import power as _p
+            _p.set_laser_on_time(int(config.get("laser_on_time", _p.laser_on_time)))
+            sleep_rng = config.get("sleep_time_range", [ _p.sleep_min, _p.sleep_max ])
+            if isinstance(sleep_rng, (list, tuple)) and len(sleep_rng) == 2:
+                _p.set_sleep_range(int(sleep_rng[0]), int(sleep_rng[1]))
+        except Exception:
+            pass
 
         # Args
         parser = argparse.ArgumentParser(description="Automatic cat laser toy")
@@ -121,12 +129,15 @@ class Laser:
     def pause_for_break(self, start_time):
         self.turn_laser_off()
         power.set_power(2)
+        power.break_until = start_time
         while time.time() < start_time:
-            time.sleep(5)
+            time.sleep(1)
             if power.get_power() == 1:
                 break
             if power.get_power() == 0:
+                power.break_until = None
                 return
+        power.break_until = None
         power.set_power(1)
 
     def run(self):
@@ -137,7 +148,8 @@ class Laser:
         time.sleep(3)
         while True:
             self.turn_laser_on()
-            on_time = time.time() + self.laser_on_time
+            on_time = time.time() + int(power.laser_on_time)
+            power.on_until = on_time
             while time.time() < on_time:
                 if random.random() < power.percentage_move_chance:
                     pan = random.randint(self.pan_range[0], self.pan_range[1])
@@ -146,13 +158,16 @@ class Laser:
                 time.sleep(power.delay_between_movements)
                 if power.get_power() == 0:
                     self.turn_laser_off()
+                    power.on_until = None
                     try:
                         GPIO.cleanup()
                     except Exception:
                         pass
                     return
+            power.on_until = None
             print("taking a break")
-            start_time = time.time() + random.randint(self.sleep_time_range[0], self.sleep_time_range[1])
+            sleep_dur = random.randint(int(power.sleep_min), int(power.sleep_max))
+            start_time = time.time() + sleep_dur
             self.pause_for_break(start_time)
 
 

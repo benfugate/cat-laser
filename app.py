@@ -77,10 +77,20 @@ def index():
 @app.route('/api/settings', methods=['GET', 'POST'])
 def api_settings():
     if request.method == 'GET':
+        now = time.time()
+        on_remaining = max(0, int(power.on_until - now)) if getattr(power, 'on_until', None) else 0
+        break_remaining = max(0, int(power.break_until - now)) if getattr(power, 'break_until', None) else 0
+        status = 'on' if power.get_power() == 1 else ('break' if power.get_power() == 2 else 'off')
         return jsonify({
             'speed': int(power.percentage_move_chance * 10),
             'delay': int(power.delay_between_movements),
             'points': int(power.num_points),
+            'on_time': int(getattr(power, 'laser_on_time', 900)),
+            'sleep_min': int(getattr(power, 'sleep_min', 1200)),
+            'sleep_max': int(getattr(power, 'sleep_max', 5400)),
+            'on_remaining': on_remaining,
+            'break_remaining': break_remaining,
+            'status': status,
             'power': power.get_power(),
         })
 
@@ -112,12 +122,42 @@ def api_settings():
         power.set_num_points(points_val)
         updated['points'] = int(power.num_points)
 
+    # Timer settings
+    if 'on_time' in data or 'laser_on_time' in data:
+        on_time_val = parse_int(data.get('on_time', data.get('laser_on_time')), getattr(power, 'laser_on_time', 900))
+        if hasattr(power, 'set_laser_on_time'):
+            power.set_laser_on_time(on_time_val)
+        updated['on_time'] = int(getattr(power, 'laser_on_time', on_time_val))
+
+    sm = data.get('sleep_min')
+    sx = data.get('sleep_max')
+    if sm is not None or sx is not None:
+        cur_min = int(getattr(power, 'sleep_min', 1200))
+        cur_max = int(getattr(power, 'sleep_max', 5400))
+        new_min = parse_int(sm, cur_min) if sm is not None else cur_min
+        new_max = parse_int(sx, cur_max) if sx is not None else cur_max
+        if hasattr(power, 'set_sleep_range'):
+            power.set_sleep_range(new_min, new_max)
+        updated['sleep_min'] = int(getattr(power, 'sleep_min', new_min))
+        updated['sleep_max'] = int(getattr(power, 'sleep_max', new_max))
+
+    now = time.time()
+    on_remaining = max(0, int(power.on_until - now)) if getattr(power, 'on_until', None) else 0
+    break_remaining = max(0, int(power.break_until - now)) if getattr(power, 'break_until', None) else 0
+    status = 'on' if power.get_power() == 1 else ('break' if power.get_power() == 2 else 'off')
+
     return jsonify({
         'ok': True,
         'updated': updated,
         'speed': int(power.percentage_move_chance * 10),
         'delay': int(power.delay_between_movements),
         'points': int(power.num_points),
+        'on_time': int(getattr(power, 'laser_on_time', 900)),
+        'sleep_min': int(getattr(power, 'sleep_min', 1200)),
+        'sleep_max': int(getattr(power, 'sleep_max', 5400)),
+        'on_remaining': on_remaining,
+        'break_remaining': break_remaining,
+        'status': status,
         'power': power.get_power(),
     })
 

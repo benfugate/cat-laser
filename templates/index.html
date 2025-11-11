@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
   <style>
     .value-badge { min-width: 3rem; display: inline-block; text-align: right; }
+    .value-badge-wide { min-width: 5.5rem; display: inline-block; text-align: right; }
   </style>
 </head>
 <body class="bg-light">
@@ -15,8 +16,9 @@
 
     <div class="row g-3">
       <div class="col-12 col-md-8">
-        <div class="card">
+        <div class="card mb-3">
           <div class="card-body">
+            <h5 class="card-title">Movement Settings</h5>
             <div class="mb-3">
               <label for="speed" class="form-label">Speed: <span id="speedVal" class="badge bg-secondary value-badge">{{ speed|int }}</span></label>
               <input id="speed" name="speed" class="form-range" type="range" min="0" max="10" value="{{ speed }}">
@@ -30,7 +32,38 @@
               <label for="points" class="form-label">Number of Line Points: <span id="pointsVal" class="badge bg-secondary value-badge">{{ points }}</span></label>
               <input id="points" name="points" class="form-range" type="range" min="5" max="30" value="{{ points }}">
             </div>
-            <div id="status" class="text-muted small">Settings update automatically.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Timer Settings</h5>
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <label for="on_time" class="form-label">On Time (sec): <span id="onTimeVal" class="badge bg-secondary value-badge">900</span></label>
+                <input id="on_time" type="number" class="form-control" min="10" step="5" value="900">
+                <div class="form-text">How long the laser stays on before a break.</div>
+              </div>
+              <div class="col-6 col-md-4">
+                <label for="sleep_min" class="form-label">Sleep Min (sec): <span id="sleepMinVal" class="badge bg-secondary value-badge">1200</span></label>
+                <input id="sleep_min" type="number" class="form-control" min="0" step="10" value="1200">
+              </div>
+              <div class="col-6 col-md-4">
+                <label for="sleep_max" class="form-label">Sleep Max (sec): <span id="sleepMaxVal" class="badge bg-secondary value-badge">5400</span></label>
+                <input id="sleep_max" type="number" class="form-control" min="0" step="10" value="5400">
+              </div>
+            </div>
+            <hr>
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="text-muted">Time remaining (on): <span id="onRemaining" class="badge bg-info value-badge-wide">00:00</span></div>
+              </div>
+              <div class="col-6">
+                <div class="text-muted">Time until resume (break): <span id="breakRemaining" class="badge bg-info value-badge-wide">00:00</span></div>
+              </div>
+            </div>
+            <div class="mt-2 small">Status: <span id="statusText" class="text-muted">unknown</span></div>
+            <div id="saveStatus" class="text-muted small mt-2">Settings update automatically.</div>
           </div>
         </div>
       </div>
@@ -53,69 +86,122 @@
       const speedEl = document.getElementById('speed');
       const delayEl = document.getElementById('delay');
       const pointsEl = document.getElementById('points');
+      const onTimeEl = document.getElementById('on_time');
+      const sleepMinEl = document.getElementById('sleep_min');
+      const sleepMaxEl = document.getElementById('sleep_max');
+
       const speedValEl = document.getElementById('speedVal');
       const delayValEl = document.getElementById('delayVal');
       const pointsValEl = document.getElementById('pointsVal');
-      const statusEl = document.getElementById('status');
+      const onTimeValEl = document.getElementById('onTimeVal');
+      const sleepMinValEl = document.getElementById('sleepMinVal');
+      const sleepMaxValEl = document.getElementById('sleepMaxVal');
 
-      let timer = null;
-      function renderValues(s, d, p) {
-        speedValEl.textContent = parseInt(s);
-        delayValEl.textContent = parseInt(d);
-        pointsValEl.textContent = parseInt(p);
+      const onRemEl = document.getElementById('onRemaining');
+      const breakRemEl = document.getElementById('breakRemaining');
+      const statusTextEl = document.getElementById('statusText');
+      const saveStatusEl = document.getElementById('saveStatus');
+
+      function fmt(sec) {
+        sec = Math.max(0, parseInt(sec || 0, 10));
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
       }
+
+      function renderValues() {
+        speedValEl.textContent = parseInt(speedEl.value);
+        delayValEl.textContent = parseInt(delayEl.value);
+        pointsValEl.textContent = parseInt(pointsEl.value);
+        onTimeValEl.textContent = parseInt(onTimeEl.value);
+        sleepMinValEl.textContent = parseInt(sleepMinEl.value);
+        sleepMaxValEl.textContent = parseInt(sleepMaxEl.value);
+      }
+
       function getValues() {
         return {
           speed: parseInt(speedEl.value),
           delay: parseInt(delayEl.value),
-          points: parseInt(pointsEl.value)
+          points: parseInt(pointsEl.value),
+          on_time: parseInt(onTimeEl.value),
+          sleep_min: parseInt(sleepMinEl.value),
+          sleep_max: parseInt(sleepMaxEl.value)
         };
       }
-      function setValues(data) {
+
+      function setStatus(msg, ok=true) {
+        saveStatusEl.textContent = msg;
+        saveStatusEl.className = 'small ' + (ok ? 'text-muted' : 'text-danger');
+      }
+
+      function applyFromSettings(data) {
         if (typeof data.speed !== 'undefined') speedEl.value = data.speed;
         if (typeof data.delay !== 'undefined') delayEl.value = data.delay;
         if (typeof data.points !== 'undefined') pointsEl.value = data.points;
-        renderValues(speedEl.value, delayEl.value, pointsEl.value);
+        if (typeof data.on_time !== 'undefined') onTimeEl.value = data.on_time;
+        if (typeof data.sleep_min !== 'undefined') sleepMinEl.value = data.sleep_min;
+        if (typeof data.sleep_max !== 'undefined') sleepMaxEl.value = data.sleep_max;
+        statusTextEl.textContent = data.status || 'unknown';
+        onRemEl.textContent = fmt(data.on_remaining || 0);
+        breakRemEl.textContent = fmt(data.break_remaining || 0);
+        renderValues();
       }
-      function setStatus(msg, ok=true) {
-        statusEl.textContent = msg;
-        statusEl.className = 'small ' + (ok ? 'text-muted' : 'text-danger');
-      }
+
+      let timer = null;
       async function pushSettings() {
         const body = JSON.stringify(getValues());
         try {
-          const res = await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body
-          });
+          const res = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           const data = await res.json();
-          setValues(data);
+          // Keep only authoritative fields that don't fight user input
+          statusTextEl.textContent = data.status || 'unknown';
+          onRemEl.textContent = fmt(data.on_remaining || 0);
+          breakRemEl.textContent = fmt(data.break_remaining || 0);
           setStatus('Settings saved');
         } catch (e) {
           setStatus('Failed to save settings: ' + e.message, false);
         }
       }
+
       function scheduleUpdate() {
         setStatus('Saving...');
         if (timer) clearTimeout(timer);
-        timer = setTimeout(pushSettings, 200);
+        timer = setTimeout(pushSettings, 250);
       }
 
+      // Attach listeners
       ['input', 'change'].forEach(evt => {
-        speedEl.addEventListener(evt, () => { renderValues(speedEl.value, delayEl.value, pointsEl.value); scheduleUpdate(); });
-        delayEl.addEventListener(evt, () => { renderValues(speedEl.value, delayEl.value, pointsEl.value); scheduleUpdate(); });
-        pointsEl.addEventListener(evt, () => { renderValues(speedEl.value, delayEl.value, pointsEl.value); scheduleUpdate(); });
+        speedEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
+        delayEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
+        pointsEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
+        onTimeEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
+        sleepMinEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
+        sleepMaxEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
       });
 
-      // Initialize from server (in case defaults changed on backend)
+      // Poll countdown/status every second
+      setInterval(async () => {
+        try {
+          const res = await fetch('/api/settings');
+          if (res.ok) {
+            const data = await res.json();
+            statusTextEl.textContent = data.status || 'unknown';
+            onRemEl.textContent = fmt(data.on_remaining || 0);
+            breakRemEl.textContent = fmt(data.break_remaining || 0);
+          }
+        } catch (_) { /* ignore */ }
+      }, 1000);
+
+      // Initial load
       (async () => {
         try {
           const res = await fetch('/api/settings');
           if (res.ok) {
             const data = await res.json();
-            setValues(data);
+            applyFromSettings(data);
             setStatus('Ready');
           }
         } catch (_) { /* ignore */ }
