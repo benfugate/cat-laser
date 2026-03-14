@@ -126,6 +126,9 @@
             </div>
 
             <div id="boundsStatus" class="text-muted small mt-4">Bounds update automatically. Preview stops when leaving tab.</div>
+            <div class="mt-3">
+              <button id="traceBounds" class="btn btn-primary w-100">Trace Bounding Box</button>
+            </div>
           </div>
         </div>
       </div>
@@ -219,6 +222,11 @@
       });
 
       els.togglePreview.onclick = () => setPreview(!isPreviewing);
+
+      document.getElementById('traceBounds').onclick = async () => {
+        if (!isPreviewing) await setPreview(true);
+        await api('/api/preview', { action: 'trace' });
+      };
 
       document.querySelectorAll('.preview-btn').forEach(btn => {
         btn.onclick = async () => {

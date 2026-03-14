@@ -257,6 +257,37 @@ def api_preview():
         _laser_instance.move_laser(pan, tilt)
         return jsonify({'ok': True, 'pan': pan, 'tilt': tilt})
 
+    if action == 'trace':
+        power.set_power(3)
+        if _laser_instance is None:
+            from src.laser import Laser
+            _laser_instance = Laser([])
+        
+        config = read_config()
+        min_p = config.get('min_pan', 0)
+        max_p = config.get('max_pan', 180)
+        min_t = config.get('min_tilt', 0)
+        max_t = config.get('max_tilt', 180)
+
+        def do_trace():
+            _laser_instance.turn_laser_on()
+            # 4 Corners
+            corners = [
+                (min_p, min_t), (max_p, min_t),
+                (max_p, max_t), (min_p, max_t),
+                (min_p, min_t)
+            ]
+            # Move to start
+            _laser_instance.move_laser(min_p, min_t)
+            time.sleep(0.5)
+            # Trace lines
+            for p, t in corners:
+                _laser_instance.create_laser_path(p, t)
+            # Done, but keep laser on in preview mode
+            
+        Thread(target=do_trace, daemon=True).start()
+        return jsonify({'ok': True, 'status': 'tracing'})
+
     return jsonify({'ok': False, 'error': 'invalid action'})
 
 
