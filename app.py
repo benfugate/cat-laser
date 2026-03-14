@@ -2,6 +2,7 @@
 
 import os
 import sys
+import json
 import time
 import traceback
 from flask import Flask, render_template, request, jsonify
@@ -10,9 +11,34 @@ from src.power import power
 
 app = Flask(__name__)
 
+# Global reference to running laser instance for hot-reload of bounds
+_laser_instance = None
+
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src', 'config.json')
+
+
+def parse_int(value, fallback):
+    try:
+        if value is None:
+            return int(fallback)
+        return int(float(value))
+    except Exception:
+        return int(fallback)
+
+
+def read_config():
+    with open(CONFIG_PATH) as f:
+        return json.load(f)
+
+
+def write_config(config):
+    with open(CONFIG_PATH, 'w') as f:
+        json.dump(config, f, indent=2)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    global _laser_instance
     if request.method == 'POST':
         if request.form.get('start') == 'start':
             if power.get_power() == 1:
@@ -26,12 +52,14 @@ def index():
                 power.set_power(1)
                 from src.laser import Laser  # lazy import so app can run without RPi libs until needed
                 laser = Laser([])
+                _laser_instance = laser
                 try:
                     Thread(target=laser.run, daemon=True).start()
                 except Exception as e:
                     print(e)
                     laser.turn_laser_off()
-                    if type(e).__name__ != KeyboardInterrupt:
+                    _laser_instance = None
+                    if type(e).__name__ != 'KeyboardInterrupt':
                         # Log error to file
                         errors_dir = f'{os.getcwd()}/errors/'
                         if not os.path.exists(errors_dir):
@@ -47,16 +75,8 @@ def index():
                             traceback.print_exception(e_type, e_val, e_tb, file=errorfile)
         elif request.form.get('stop') == 'stop':
             power.set_power(0)
+            _laser_instance = None
         else:
-            # Update settings with robust parsing (handle '5.0' etc.)
-            def parse_int(value, fallback):
-                try:
-                    if value is None:
-                        return int(fallback)
-                    return int(float(value))
-                except Exception:
-                    return int(fallback)
-
             current_speed = int(power.percentage_move_chance * 10)
             speed_val = parse_int(request.form.get('speed'), current_speed)
             delay_val = parse_int(request.form.get('delay'), power.delay_between_movements)
@@ -65,11 +85,11 @@ def index():
             if speed_val <= 0:
                 power.set_percentage_move_chance(0)
             else:
-                power.set_percentage_move_chance(speed_val/10)
+                power.set_percentage_move_chance(speed_val / 10)
             power.set_delay_between_movements(delay_val)
             power.set_num_points(points_val)
     return render_template('index.html',
-                           speed=power.percentage_move_chance*10,
+                           speed=power.percentage_move_chance * 10,
                            delay=power.delay_between_movements,
                            points=power.num_points)
 
@@ -95,13 +115,6 @@ def api_settings():
         })
 
     data = request.get_json(silent=True) or {}
-
-    def parse_int(value, fallback):
-        try:
-            return int(float(value))
-        except Exception:
-            return int(fallback)
-
     updated = {}
 
     if 'speed' in data:
@@ -109,7 +122,7 @@ def api_settings():
         if speed_val <= 0:
             power.set_percentage_move_chance(0)
         else:
-            power.set_percentage_move_chance(speed_val/10)
+            power.set_percentage_move_chance(speed_val / 10)
         updated['speed'] = int(power.percentage_move_chance * 10)
 
     if 'delay' in data:
@@ -162,5 +175,46 @@ def api_settings():
     })
 
 
+@app.route('/api/bounds', methods=['GET', 'POST'])
+def api_bounds():
+    global _laser_instance
+    config = read_config()
+
+    if request.method == 'GET':
+        return jsonify({
+            'min_pan': config.get('min_pan', 0),
+            'max_pan': config.get('max_pan', 180),
+            'min_tilt': config.get('min_tilt', 0),
+            'max_tilt': config.get('max_tilt', 180),
+        })
+
+    data = request.get_json(silent=True) or {}
+    updated = {}
+
+    for key in ('min_pan', 'max_pan', 'min_tilt', 'max_tilt'):
+        if key in data:
+            val = parse_int(data[key], config.get(key, 0))
+            val = max(0, min(180, val))
+            config[key] = val
+            updated[key] = val
+
+    if updated:
+        write_config(config)
+        # Hot-reload bounds into the running laser instance
+        if _laser_instance is not None:
+            _laser_instance.pan_range = (config['min_pan'], config['max_pan'])
+            _laser_instance.tilt_range = (config['min_tilt'], config['max_tilt'])
+
+    return jsonify({
+        'ok': True,
+        'updated': updated,
+        'min_pan': config.get('min_pan', 0),
+        'max_pan': config.get('max_pan', 180),
+        'min_tilt': config.get('min_tilt', 0),
+        'max_tilt': config.get('max_tilt', 180),
+    })
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    port = int(os.environ.get('PORT', 80))
+    app.run(host='0.0.0.0', port=port, debug=False)

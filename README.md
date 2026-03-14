@@ -25,7 +25,21 @@ You can really get this stuff wherever this is just what I got
 I 3D printed a case that houses the Pi and the relay, and the servos are mounted on top of it.
 I may post these files once I refine it a bit.
 
-### Software
+### Setup (fresh install)
+
+After cloning the repo on a Raspberry Pi, run the install script:
+
+```bash
+sudo bash install.sh
+```
+
+This will:
+- Enable I2C (required for the servo controller)
+- Install all Python dependencies
+- Create the `errors/` log directory
+- Install and enable the systemd service (auto-start on boot, running on port 80)
+
+### Software (manual)
 
 - Depends on Python 3
 - Install pip packages: `pip install -r requirements.txt`
@@ -33,20 +47,24 @@ I may post these files once I refine it a bit.
 ### Web UI
 - Start the Flask app:
   - `python3 app.py`
-- Open `http://<pi-ip>:5000`
+- Open `http://<pi-ip>` (runs on port 80 by default; set `PORT` env var to override)
 - Controls:
   - Start / Stop buttons
   - Sliders for Speed, Delay Between Movements, Number of Line Points
-  - Sliders show current values and auto-save changes (no Apply needed)
+  - Timer settings: On Time, Sleep Min/Max
+  - **Bounding Box**: Pan/Tilt min and max angles — changes save automatically and apply immediately to a running laser
+  - All settings auto-save on change (no Apply button needed)
 
 API:
-- `GET /api/settings` -> `{ speed, delay, points, power }`
-- `POST /api/settings` with JSON subset of `{ speed, delay, points }` to update immediately
+- `GET /api/settings` → `{ speed, delay, points, on_time, sleep_min, sleep_max, power, status, on_remaining, break_remaining }`
+- `POST /api/settings` with JSON subset to update immediately
+- `GET /api/bounds` → `{ min_pan, max_pan, min_tilt, max_tilt }`
+- `POST /api/bounds` with JSON subset to update and hot-reload into the running laser
 
 ### Diagnostics
 - Servo sweep test:
   - `python3 src/servo_test.py`
-- Interactive bounds:
+- Interactive bounds (CLI alternative to the web UI):
   - `python3 set_bounds.py`
 - Configuration (src/config.json):
   - `tilt_channel`, `pan_channel`

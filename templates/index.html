@@ -35,7 +35,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card mb-3">
           <div class="card-body">
             <h5 class="card-title">Timer Settings</h5>
             <div class="row g-3">
@@ -66,6 +66,32 @@
             <div id="saveStatus" class="text-muted small mt-2">Settings update automatically.</div>
           </div>
         </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Bounding Box</h5>
+            <div class="form-text mb-3">Servo angle limits (0–180°). Changes apply immediately to a running laser.</div>
+            <div class="row g-3">
+              <div class="col-6 col-md-3">
+                <label for="min_pan" class="form-label">Pan Min</label>
+                <input id="min_pan" type="number" class="form-control" min="0" max="180" step="1" value="50">
+              </div>
+              <div class="col-6 col-md-3">
+                <label for="max_pan" class="form-label">Pan Max</label>
+                <input id="max_pan" type="number" class="form-control" min="0" max="180" step="1" value="170">
+              </div>
+              <div class="col-6 col-md-3">
+                <label for="min_tilt" class="form-label">Tilt Min</label>
+                <input id="min_tilt" type="number" class="form-control" min="0" max="180" step="1" value="30">
+              </div>
+              <div class="col-6 col-md-3">
+                <label for="max_tilt" class="form-label">Tilt Max</label>
+                <input id="max_tilt" type="number" class="form-control" min="0" max="180" step="1" value="75">
+              </div>
+            </div>
+            <div id="boundsStatus" class="text-muted small mt-2">Bounds update automatically.</div>
+          </div>
+        </div>
       </div>
 
       <div class="col-12 col-md-4 d-grid gap-2 align-content-start">
@@ -77,8 +103,6 @@
         </form>
       </div>
     </div>
-
-    <footer class="text-muted small mt-4">No external CDN. Bootstrap assets served locally.</footer>
   </div>
 
   <script>
@@ -101,6 +125,13 @@
       const breakRemEl = document.getElementById('breakRemaining');
       const statusTextEl = document.getElementById('statusText');
       const saveStatusEl = document.getElementById('saveStatus');
+
+      // Bounds elements
+      const minPanEl = document.getElementById('min_pan');
+      const maxPanEl = document.getElementById('max_pan');
+      const minTiltEl = document.getElementById('min_tilt');
+      const maxTiltEl = document.getElementById('max_tilt');
+      const boundsStatusEl = document.getElementById('boundsStatus');
 
       function fmt(sec) {
         sec = Math.max(0, parseInt(sec || 0, 10));
@@ -136,6 +167,11 @@
         saveStatusEl.className = 'small ' + (ok ? 'text-muted' : 'text-danger');
       }
 
+      function setBoundsStatus(msg, ok=true) {
+        boundsStatusEl.textContent = msg;
+        boundsStatusEl.className = 'small mt-2 ' + (ok ? 'text-muted' : 'text-danger');
+      }
+
       function applyFromSettings(data) {
         if (typeof data.speed !== 'undefined') speedEl.value = data.speed;
         if (typeof data.delay !== 'undefined') delayEl.value = data.delay;
@@ -149,14 +185,21 @@
         renderValues();
       }
 
-      let timer = null;
+      function applyFromBounds(data) {
+        if (typeof data.min_pan !== 'undefined') minPanEl.value = data.min_pan;
+        if (typeof data.max_pan !== 'undefined') maxPanEl.value = data.max_pan;
+        if (typeof data.min_tilt !== 'undefined') minTiltEl.value = data.min_tilt;
+        if (typeof data.max_tilt !== 'undefined') maxTiltEl.value = data.max_tilt;
+      }
+
+      // Settings auto-save
+      let settingsTimer = null;
       async function pushSettings() {
         const body = JSON.stringify(getValues());
         try {
           const res = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           const data = await res.json();
-          // Keep only authoritative fields that don't fight user input
           statusTextEl.textContent = data.status || 'unknown';
           onRemEl.textContent = fmt(data.on_remaining || 0);
           breakRemEl.textContent = fmt(data.break_remaining || 0);
@@ -166,20 +209,49 @@
         }
       }
 
-      function scheduleUpdate() {
+      function scheduleSettingsUpdate() {
         setStatus('Saving...');
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(pushSettings, 250);
+        if (settingsTimer) clearTimeout(settingsTimer);
+        settingsTimer = setTimeout(pushSettings, 250);
+      }
+
+      // Bounds auto-save
+      let boundsTimer = null;
+      async function pushBounds() {
+        const body = JSON.stringify({
+          min_pan: parseInt(minPanEl.value),
+          max_pan: parseInt(maxPanEl.value),
+          min_tilt: parseInt(minTiltEl.value),
+          max_tilt: parseInt(maxTiltEl.value),
+        });
+        try {
+          const res = await fetch('/api/bounds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          setBoundsStatus('Bounds saved');
+        } catch (e) {
+          setBoundsStatus('Failed to save bounds: ' + e.message, false);
+        }
+      }
+
+      function scheduleBoundsUpdate() {
+        setBoundsStatus('Saving...');
+        if (boundsTimer) clearTimeout(boundsTimer);
+        boundsTimer = setTimeout(pushBounds, 250);
       }
 
       // Attach listeners
       ['input', 'change'].forEach(evt => {
-        speedEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
-        delayEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
-        pointsEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
-        onTimeEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
-        sleepMinEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
-        sleepMaxEl.addEventListener(evt, () => { renderValues(); scheduleUpdate(); });
+        speedEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
+        delayEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
+        pointsEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
+        onTimeEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
+        sleepMinEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
+        sleepMaxEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
+
+        minPanEl.addEventListener(evt, scheduleBoundsUpdate);
+        maxPanEl.addEventListener(evt, scheduleBoundsUpdate);
+        minTiltEl.addEventListener(evt, scheduleBoundsUpdate);
+        maxTiltEl.addEventListener(evt, scheduleBoundsUpdate);
       });
 
       // Poll countdown/status every second
@@ -198,11 +270,18 @@
       // Initial load
       (async () => {
         try {
-          const res = await fetch('/api/settings');
-          if (res.ok) {
-            const data = await res.json();
+          const [settingsRes, boundsRes] = await Promise.all([
+            fetch('/api/settings'),
+            fetch('/api/bounds'),
+          ]);
+          if (settingsRes.ok) {
+            const data = await settingsRes.json();
             applyFromSettings(data);
             setStatus('Ready');
+          }
+          if (boundsRes.ok) {
+            const data = await boundsRes.json();
+            applyFromBounds(data);
           }
         } catch (_) { /* ignore */ }
       })();

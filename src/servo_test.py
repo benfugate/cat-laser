@@ -37,27 +37,37 @@ def main():
     try:
         pan, tilt, pan_ch, tilt_ch = setup_servos(cfg)
 
+        def safe_set(servoname, servo, angle):
+            try:
+                a = int(round(float(angle)))
+                a = max(0, min(180, a))
+                servo.angle = a
+                print(f"{servoname} -> {a}")
+            except Exception as e:
+                print(f"{servoname} set failed ({angle}) -> {repr(e)}")
+
+        print("Tilt actuation_range:", getattr(tilt, "actuation_range", None))
+        print("Pan actuation_range:", getattr(pan, "actuation_range", None))
+
         mid_pan = int((cfg["min_pan"] + cfg["max_pan"]) / 2)
         mid_tilt = int((cfg["min_tilt"] + cfg["max_tilt"]) / 2)
 
         # Center both
         print("Centering both servos...")
-        pan.angle = mid_pan
-        tilt.angle = mid_tilt
+        safe_set("Pan", pan, mid_pan)
+        safe_set("Tilt", tilt, mid_tilt)
         time.sleep(1)
 
         # Test tilt sweep
         print("Sweeping TILT on channel {} from min to max".format(tilt_ch))
         for a in [cfg["min_tilt"], mid_tilt, cfg["max_tilt"], mid_tilt]:
-            tilt.angle = int(a)
-            print("Tilt ->", a)
+            safe_set("Tilt", tilt, a)
             time.sleep(0.8)
 
         # Test pan sweep
         print("Sweeping PAN on channel {} from min to max".format(pan_ch))
         for a in [cfg["min_pan"], mid_pan, cfg["max_pan"], mid_pan]:
-            pan.angle = int(a)
-            print("Pan ->", a)
+            safe_set("Pan", pan, a)
             time.sleep(0.8)
 
         print("If the wrong axis moves, swap pan_channel and tilt_channel in src/config.json and re-run.")
