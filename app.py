@@ -26,6 +26,15 @@ def parse_int(value, fallback):
         return int(fallback)
 
 
+def parse_float(value, fallback):
+    try:
+        if value is None:
+            return float(fallback)
+        return float(value)
+    except Exception:
+        return float(fallback)
+
+
 def read_config():
     with open(CONFIG_PATH) as f:
         return json.load(f)
@@ -79,7 +88,7 @@ def index():
         else:
             current_speed = int(power.percentage_move_chance * 10)
             speed_val = parse_int(request.form.get('speed'), current_speed)
-            delay_val = parse_int(request.form.get('delay'), power.delay_between_movements)
+            delay_val = parse_float(request.form.get('delay'), power.delay_between_movements)
             points_val = parse_int(request.form.get('points'), power.num_points)
 
             if speed_val <= 0:
@@ -103,7 +112,7 @@ def api_settings():
         status = 'on' if power.get_power() == 1 else ('break' if power.get_power() == 2 else 'off')
         return jsonify({
             'speed': int(power.percentage_move_chance * 10),
-            'delay': int(power.delay_between_movements),
+            'delay': float(power.delay_between_movements),
             'points': int(power.num_points),
             'on_time': int(getattr(power, 'laser_on_time', 900)),
             'sleep_min': int(getattr(power, 'sleep_min', 1200)),
@@ -126,9 +135,9 @@ def api_settings():
         updated['speed'] = int(power.percentage_move_chance * 10)
 
     if 'delay' in data:
-        delay_val = parse_int(data.get('delay'), power.delay_between_movements)
+        delay_val = parse_float(data.get('delay'), power.delay_between_movements)
         power.set_delay_between_movements(delay_val)
-        updated['delay'] = int(power.delay_between_movements)
+        updated['delay'] = float(power.delay_between_movements)
 
     if 'points' in data:
         points_val = parse_int(data.get('points'), power.num_points)
@@ -163,7 +172,7 @@ def api_settings():
         'ok': True,
         'updated': updated,
         'speed': int(power.percentage_move_chance * 10),
-        'delay': int(power.delay_between_movements),
+        'delay': float(power.delay_between_movements),
         'points': int(power.num_points),
         'on_time': int(getattr(power, 'laser_on_time', 900)),
         'sleep_min': int(getattr(power, 'sleep_min', 1200)),
@@ -213,6 +222,42 @@ def api_bounds():
         'min_tilt': config.get('min_tilt', 0),
         'max_tilt': config.get('max_tilt', 180),
     })
+
+
+@app.route('/api/preview', methods=['POST'])
+def api_preview():
+    global _laser_instance
+    data = request.get_json(silent=True) or {}
+    action = data.get('action')
+
+    if action == 'start':
+        power.set_power(3)  # preview mode
+        if _laser_instance is None:
+            from src.laser import Laser
+            _laser_instance = Laser([])
+        _laser_instance.turn_laser_on()
+        return jsonify({'ok': True, 'status': 'preview'})
+
+    if action == 'stop':
+        power.set_power(0)
+        if _laser_instance is not None:
+            _laser_instance.turn_laser_off()
+        return jsonify({'ok': True, 'status': 'off'})
+
+    if action == 'move':
+        # Force laser on if it's not (but don't restart random thread)
+        power.set_power(3)
+        if _laser_instance is None:
+            from src.laser import Laser
+            _laser_instance = Laser([])
+        _laser_instance.turn_laser_on()
+
+        pan = parse_int(data.get('pan'), 90)
+        tilt = parse_int(data.get('tilt'), 90)
+        _laser_instance.move_laser(pan, tilt)
+        return jsonify({'ok': True, 'pan': pan, 'tilt': tilt})
+
+    return jsonify({'ok': False, 'error': 'invalid action'})
 
 
 if __name__ == '__main__':

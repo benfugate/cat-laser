@@ -20,7 +20,7 @@ class ControlPower:
 
     # Movement setters
     def set_delay_between_movements(self, delay):
-        self.delay_between_movements = int(delay)
+        self.delay_between_movements = float(delay)
 
     def set_percentage_move_chance(self, speed):
         self.percentage_move_chance = float(speed)

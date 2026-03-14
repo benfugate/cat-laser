@@ -147,10 +147,16 @@ class Laser:
         print(f"Movement chance:\n    {power.percentage_move_chance*100}% every {power.delay_between_movements} second")
         time.sleep(3)
         while True:
+            if power.get_power() == 3:  # Preview mode
+                time.sleep(0.5)
+                continue
+
             self.turn_laser_on()
             on_time = time.time() + int(power.laser_on_time)
             power.on_until = on_time
             while time.time() < on_time:
+                if power.get_power() == 3:  # Interrupt for preview
+                    break
                 if random.random() < power.percentage_move_chance:
                     pan = random.randint(self.pan_range[0], self.pan_range[1])
                     tilt = random.randint(self.tilt_range[0], self.tilt_range[1])

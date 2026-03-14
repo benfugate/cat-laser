@@ -8,285 +8,260 @@
   <style>
     .value-badge { min-width: 3rem; display: inline-block; text-align: right; }
     .value-badge-wide { min-width: 5.5rem; display: inline-block; text-align: right; }
+    .nav-tabs { margin-bottom: 1.5rem; }
+    .preview-btn { width: 100%; }
   </style>
 </head>
 <body class="bg-light">
   <div class="container py-4">
     <h1 class="mb-4">Cat Laser Control</h1>
 
-    <div class="row g-3">
-      <div class="col-12 col-md-8">
-        <div class="card mb-3">
-          <div class="card-body">
-            <h5 class="card-title">Movement Settings</h5>
-            <div class="mb-3">
-              <label for="speed" class="form-label">Speed: <span id="speedVal" class="badge bg-secondary value-badge">{{ speed|int }}</span></label>
-              <input id="speed" name="speed" class="form-range" type="range" min="0" max="10" value="{{ speed }}">
-              <div class="form-text">Higher values increase how often the laser moves.</div>
+    <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="control-tab" data-bs-toggle="tab" data-bs-target="#control" type="button" role="tab">Control Panel</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="bounds-tab" data-bs-toggle="tab" data-bs-target="#bounds" type="button" role="tab">Bounds Setup</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="mainTabsContent">
+      <!-- Control Panel Tab -->
+      <div class="tab-pane fade show active" id="control" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-12 col-md-8">
+            <div class="card mb-3">
+              <div class="card-body">
+                <h5 class="card-title">Movement Settings</h5>
+                <div class="mb-3">
+                  <label for="speed" class="form-label">Speed: <span id="speedVal" class="badge bg-secondary value-badge">{{ speed|int }}</span></label>
+                  <input id="speed" name="speed" class="form-range" type="range" min="0" max="10" value="{{ speed }}">
+                  <div class="form-text">Higher values increase how often the laser moves.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="delay" class="form-label">Delay Between Movements: <span id="delayVal" class="badge bg-secondary value-badge">{{ delay }}</span></label>
+                  <input id="delay" name="delay" class="form-range" type="range" min="0.1" max="3" step="0.1" value="{{ delay }}">
+                </div>
+                <div class="mb-3">
+                  <label for="points" class="form-label">Number of Line Points: <span id="pointsVal" class="badge bg-secondary value-badge">{{ points }}</span></label>
+                  <input id="points" name="points" class="form-range" type="range" min="5" max="30" value="{{ points }}">
+                </div>
+              </div>
             </div>
-            <div class="mb-3">
-              <label for="delay" class="form-label">Delay Between Movements: <span id="delayVal" class="badge bg-secondary value-badge">{{ delay }}</span></label>
-              <input id="delay" name="delay" class="form-range" type="range" min="0" max="3" value="{{ delay }}">
-            </div>
-            <div class="mb-3">
-              <label for="points" class="form-label">Number of Line Points: <span id="pointsVal" class="badge bg-secondary value-badge">{{ points }}</span></label>
-              <input id="points" name="points" class="form-range" type="range" min="5" max="30" value="{{ points }}">
+
+            <div class="card mb-3">
+              <div class="card-body">
+                <h5 class="card-title">Timer Settings</h5>
+                <div class="row g-3">
+                  <div class="col-12 col-md-4">
+                    <label for="on_time" class="form-label">On Time (sec): <span id="onTimeVal" class="badge bg-secondary value-badge">900</span></label>
+                    <input id="on_time" type="number" class="form-control" min="10" step="5" value="900">
+                  </div>
+                  <div class="col-6 col-md-4">
+                    <label for="sleep_min" class="form-label">Sleep Min (sec): <span id="sleepMinVal" class="badge bg-secondary value-badge">1200</span></label>
+                    <input id="sleep_min" type="number" class="form-control" min="0" step="10" value="1200">
+                  </div>
+                  <div class="col-6 col-md-4">
+                    <label for="sleep_max" class="form-label">Sleep Max (sec): <span id="sleepMaxVal" class="badge bg-secondary value-badge">5400</span></label>
+                    <input id="sleep_max" type="number" class="form-control" min="0" step="10" value="5400">
+                  </div>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-6">
+                    <div class="text-muted">Time remaining (on): <span id="onRemaining" class="badge bg-info value-badge-wide">00:00</span></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="text-muted">Time until resume (break): <span id="breakRemaining" class="badge bg-info value-badge-wide">00:00</span></div>
+                  </div>
+                </div>
+                <div class="mt-2 small">Status: <span id="statusText" class="text-muted">unknown</span></div>
+                <div id="saveStatus" class="text-muted small mt-2">Settings update automatically.</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card mb-3">
-          <div class="card-body">
-            <h5 class="card-title">Timer Settings</h5>
-            <div class="row g-3">
-              <div class="col-12 col-md-4">
-                <label for="on_time" class="form-label">On Time (sec): <span id="onTimeVal" class="badge bg-secondary value-badge">900</span></label>
-                <input id="on_time" type="number" class="form-control" min="10" step="5" value="900">
-                <div class="form-text">How long the laser stays on before a break.</div>
-              </div>
-              <div class="col-6 col-md-4">
-                <label for="sleep_min" class="form-label">Sleep Min (sec): <span id="sleepMinVal" class="badge bg-secondary value-badge">1200</span></label>
-                <input id="sleep_min" type="number" class="form-control" min="0" step="10" value="1200">
-              </div>
-              <div class="col-6 col-md-4">
-                <label for="sleep_max" class="form-label">Sleep Max (sec): <span id="sleepMaxVal" class="badge bg-secondary value-badge">5400</span></label>
-                <input id="sleep_max" type="number" class="form-control" min="0" step="10" value="5400">
-              </div>
-            </div>
-            <hr>
-            <div class="row g-3">
-              <div class="col-6">
-                <div class="text-muted">Time remaining (on): <span id="onRemaining" class="badge bg-info value-badge-wide">00:00</span></div>
-              </div>
-              <div class="col-6">
-                <div class="text-muted">Time until resume (break): <span id="breakRemaining" class="badge bg-info value-badge-wide">00:00</span></div>
-              </div>
-            </div>
-            <div class="mt-2 small">Status: <span id="statusText" class="text-muted">unknown</span></div>
-            <div id="saveStatus" class="text-muted small mt-2">Settings update automatically.</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Bounding Box</h5>
-            <div class="form-text mb-3">Servo angle limits (0–180°). Changes apply immediately to a running laser.</div>
-            <div class="row g-3">
-              <div class="col-6 col-md-3">
-                <label for="min_pan" class="form-label">Pan Min</label>
-                <input id="min_pan" type="number" class="form-control" min="0" max="180" step="1" value="50">
-              </div>
-              <div class="col-6 col-md-3">
-                <label for="max_pan" class="form-label">Pan Max</label>
-                <input id="max_pan" type="number" class="form-control" min="0" max="180" step="1" value="170">
-              </div>
-              <div class="col-6 col-md-3">
-                <label for="min_tilt" class="form-label">Tilt Min</label>
-                <input id="min_tilt" type="number" class="form-control" min="0" max="180" step="1" value="30">
-              </div>
-              <div class="col-6 col-md-3">
-                <label for="max_tilt" class="form-label">Tilt Max</label>
-                <input id="max_tilt" type="number" class="form-control" min="0" max="180" step="1" value="75">
-              </div>
-            </div>
-            <div id="boundsStatus" class="text-muted small mt-2">Bounds update automatically.</div>
+          <div class="col-12 col-md-4 d-grid gap-2 align-content-start">
+            <form method="post" action="/">
+              <button type="submit" name="start" value="start" class="btn btn-success btn-lg w-100">Start</button>
+            </form>
+            <form method="post" action="/">
+              <button type="submit" name="stop" value="stop" class="btn btn-danger btn-lg w-100">Stop</button>
+            </form>
           </div>
         </div>
       </div>
 
-      <div class="col-12 col-md-4 d-grid gap-2 align-content-start">
-        <form method="post" action="/">
-          <button type="submit" name="start" value="start" class="btn btn-success btn-lg">Start</button>
-        </form>
-        <form method="post" action="/">
-          <button type="submit" name="stop" value="stop" class="btn btn-danger btn-lg">Stop</button>
-        </form>
+      <!-- Bounds Setup Tab -->
+      <div class="tab-pane fade" id="bounds" role="tabpanel">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title d-flex justify-content-between align-items-center">
+              Bounding Box
+              <button id="togglePreview" class="btn btn-outline-primary btn-sm">Start Preview</button>
+            </h5>
+            <div class="form-text mb-4">Servo angle limits (0–180°). Adjust points and preview to calibrate.</div>
+            
+            <div class="vstack gap-3">
+              <div class="row align-items-center">
+                <div class="col-4"><label for="min_pan" class="form-label mb-0">Pan Min</label></div>
+                <div class="col-5"><input id="min_pan" type="number" class="form-control" min="0" max="180" value="50"></div>
+                <div class="col-3"><button class="btn btn-secondary btn-sm preview-btn" data-axis="pan" data-target="min_pan">Preview</button></div>
+              </div>
+              <div class="row align-items-center">
+                <div class="col-4"><label for="max_pan" class="form-label mb-0">Pan Max</label></div>
+                <div class="col-5"><input id="max_pan" type="number" class="form-control" min="0" max="180" value="170"></div>
+                <div class="col-3"><button class="btn btn-secondary btn-sm preview-btn" data-axis="pan" data-target="max_pan">Preview</button></div>
+              </div>
+              <div class="row align-items-center">
+                <div class="col-4"><label for="min_tilt" class="form-label mb-0">Tilt Min</label></div>
+                <div class="col-5"><input id="min_tilt" type="number" class="form-control" min="0" max="180" value="30"></div>
+                <div class="col-3"><button class="btn btn-secondary btn-sm preview-btn" data-axis="tilt" data-target="min_tilt">Preview</button></div>
+              </div>
+              <div class="row align-items-center">
+                <div class="col-4"><label for="max_tilt" class="form-label mb-0">Tilt Max</label></div>
+                <div class="col-5"><input id="max_tilt" type="number" class="form-control" min="0" max="180" value="75"></div>
+                <div class="col-3"><button class="btn btn-secondary btn-sm preview-btn" data-axis="tilt" data-target="max_tilt">Preview</button></div>
+              </div>
+            </div>
+
+            <div id="boundsStatus" class="text-muted small mt-4">Bounds update automatically. Preview stops when leaving tab.</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
   <script>
     (function() {
-      const speedEl = document.getElementById('speed');
-      const delayEl = document.getElementById('delay');
-      const pointsEl = document.getElementById('points');
-      const onTimeEl = document.getElementById('on_time');
-      const sleepMinEl = document.getElementById('sleep_min');
-      const sleepMaxEl = document.getElementById('sleep_max');
+      // Elements
+      const els = {
+        speed: document.getElementById('speed'), delay: document.getElementById('delay'), points: document.getElementById('points'),
+        onTime: document.getElementById('on_time'), sleepMin: document.getElementById('sleep_min'), sleepMax: document.getElementById('sleep_max'),
+        speedVal: document.getElementById('speedVal'), delayVal: document.getElementById('delayVal'), pointsVal: document.getElementById('pointsVal'),
+        onTimeVal: document.getElementById('onTimeVal'), sleepMinVal: document.getElementById('sleepMinVal'), sleepMaxVal: document.getElementById('sleepMaxVal'),
+        onRem: document.getElementById('onRemaining'), breakRem: document.getElementById('breakRemaining'),
+        statusText: document.getElementById('statusText'), saveStatus: document.getElementById('saveStatus'),
+        minPan: document.getElementById('min_pan'), maxPan: document.getElementById('max_pan'),
+        minTilt: document.getElementById('min_tilt'), maxTilt: document.getElementById('max_tilt'),
+        boundsStatus: document.getElementById('boundsStatus'), togglePreview: document.getElementById('togglePreview'),
+        boundsTab: document.getElementById('bounds-tab')
+      };
 
-      const speedValEl = document.getElementById('speedVal');
-      const delayValEl = document.getElementById('delayVal');
-      const pointsValEl = document.getElementById('pointsVal');
-      const onTimeValEl = document.getElementById('onTimeVal');
-      const sleepMinValEl = document.getElementById('sleepMinVal');
-      const sleepMaxValEl = document.getElementById('sleepMaxVal');
-
-      const onRemEl = document.getElementById('onRemaining');
-      const breakRemEl = document.getElementById('breakRemaining');
-      const statusTextEl = document.getElementById('statusText');
-      const saveStatusEl = document.getElementById('saveStatus');
-
-      // Bounds elements
-      const minPanEl = document.getElementById('min_pan');
-      const maxPanEl = document.getElementById('max_pan');
-      const minTiltEl = document.getElementById('min_tilt');
-      const maxTiltEl = document.getElementById('max_tilt');
-      const boundsStatusEl = document.getElementById('boundsStatus');
+      let isPreviewing = false;
 
       function fmt(sec) {
         sec = Math.max(0, parseInt(sec || 0, 10));
-        const h = Math.floor(sec / 3600);
-        const m = Math.floor((sec % 3600) / 60);
-        const s = sec % 60;
-        if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+        return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
       }
 
       function renderValues() {
-        speedValEl.textContent = parseInt(speedEl.value);
-        delayValEl.textContent = parseInt(delayEl.value);
-        pointsValEl.textContent = parseInt(pointsEl.value);
-        onTimeValEl.textContent = parseInt(onTimeEl.value);
-        sleepMinValEl.textContent = parseInt(sleepMinEl.value);
-        sleepMaxValEl.textContent = parseInt(sleepMaxEl.value);
+        els.speedVal.textContent = els.speed.value;
+        els.delayVal.textContent = parseFloat(els.delay.value).toFixed(1);
+        els.pointsVal.textContent = els.points.value;
+        els.onTimeVal.textContent = els.onTime.value;
+        els.sleepMinVal.textContent = els.sleepMin.value;
+        els.sleepMaxVal.textContent = els.sleepMax.value;
       }
 
-      function getValues() {
-        return {
-          speed: parseInt(speedEl.value),
-          delay: parseInt(delayEl.value),
-          points: parseInt(pointsEl.value),
-          on_time: parseInt(onTimeEl.value),
-          sleep_min: parseInt(sleepMinEl.value),
-          sleep_max: parseInt(sleepMaxEl.value)
-        };
+      // API calls
+      async function api(url, body) {
+        const opt = body ? { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) } : {};
+        const res = await fetch(url, opt);
+        return res.json();
       }
 
-      function setStatus(msg, ok=true) {
-        saveStatusEl.textContent = msg;
-        saveStatusEl.className = 'small ' + (ok ? 'text-muted' : 'text-danger');
-      }
-
-      function setBoundsStatus(msg, ok=true) {
-        boundsStatusEl.textContent = msg;
-        boundsStatusEl.className = 'small mt-2 ' + (ok ? 'text-muted' : 'text-danger');
-      }
-
-      function applyFromSettings(data) {
-        if (typeof data.speed !== 'undefined') speedEl.value = data.speed;
-        if (typeof data.delay !== 'undefined') delayEl.value = data.delay;
-        if (typeof data.points !== 'undefined') pointsEl.value = data.points;
-        if (typeof data.on_time !== 'undefined') onTimeEl.value = data.on_time;
-        if (typeof data.sleep_min !== 'undefined') sleepMinEl.value = data.sleep_min;
-        if (typeof data.sleep_max !== 'undefined') sleepMaxEl.value = data.sleep_max;
-        statusTextEl.textContent = data.status || 'unknown';
-        onRemEl.textContent = fmt(data.on_remaining || 0);
-        breakRemEl.textContent = fmt(data.break_remaining || 0);
-        renderValues();
-      }
-
-      function applyFromBounds(data) {
-        if (typeof data.min_pan !== 'undefined') minPanEl.value = data.min_pan;
-        if (typeof data.max_pan !== 'undefined') maxPanEl.value = data.max_pan;
-        if (typeof data.min_tilt !== 'undefined') minTiltEl.value = data.min_tilt;
-        if (typeof data.max_tilt !== 'undefined') maxTiltEl.value = data.max_tilt;
-      }
-
-      // Settings auto-save
       let settingsTimer = null;
-      async function pushSettings() {
-        const body = JSON.stringify(getValues());
-        try {
-          const res = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          const data = await res.json();
-          statusTextEl.textContent = data.status || 'unknown';
-          onRemEl.textContent = fmt(data.on_remaining || 0);
-          breakRemEl.textContent = fmt(data.break_remaining || 0);
-          setStatus('Settings saved');
-        } catch (e) {
-          setStatus('Failed to save settings: ' + e.message, false);
-        }
+      function scheduleSettings() {
+        els.saveStatus.textContent = 'Saving...';
+        clearTimeout(settingsTimer);
+        settingsTimer = setTimeout(async () => {
+          try {
+            const data = await api('/api/settings', {
+              speed: parseInt(els.speed.value), delay: parseFloat(els.delay.value), points: parseInt(els.points.value),
+              on_time: parseInt(els.onTime.value), sleep_min: parseInt(els.sleepMin.value), sleep_max: parseInt(els.sleepMax.value)
+            });
+            els.saveStatus.textContent = 'Settings saved';
+          } catch (e) { els.saveStatus.textContent = 'Error: ' + e.message; }
+        }, 500);
       }
 
-      function scheduleSettingsUpdate() {
-        setStatus('Saving...');
-        if (settingsTimer) clearTimeout(settingsTimer);
-        settingsTimer = setTimeout(pushSettings, 250);
-      }
-
-      // Bounds auto-save
       let boundsTimer = null;
-      async function pushBounds() {
-        const body = JSON.stringify({
-          min_pan: parseInt(minPanEl.value),
-          max_pan: parseInt(maxPanEl.value),
-          min_tilt: parseInt(minTiltEl.value),
-          max_tilt: parseInt(maxTiltEl.value),
-        });
-        try {
-          const res = await fetch('/api/bounds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          setBoundsStatus('Bounds saved');
-        } catch (e) {
-          setBoundsStatus('Failed to save bounds: ' + e.message, false);
-        }
+      function scheduleBounds() {
+        els.boundsStatus.textContent = 'Saving...';
+        clearTimeout(boundsTimer);
+        boundsTimer = setTimeout(async () => {
+          try {
+            await api('/api/bounds', {
+              min_pan: parseInt(els.minPan.value), max_pan: parseInt(els.maxPan.value),
+              min_tilt: parseInt(els.minTilt.value), max_tilt: parseInt(els.maxTilt.value)
+            });
+            els.boundsStatus.textContent = 'Bounds saved';
+          } catch (e) { els.boundsStatus.textContent = 'Error: ' + e.message; }
+        }, 500);
       }
 
-      function scheduleBoundsUpdate() {
-        setBoundsStatus('Saving...');
-        if (boundsTimer) clearTimeout(boundsTimer);
-        boundsTimer = setTimeout(pushBounds, 250);
+      async function setPreview(active) {
+        isPreviewing = active;
+        els.togglePreview.textContent = active ? 'Stop Preview' : 'Start Preview';
+        els.togglePreview.className = active ? 'btn btn-danger btn-sm' : 'btn btn-outline-primary btn-sm';
+        await api('/api/preview', { action: active ? 'start' : 'stop' });
       }
 
-      // Attach listeners
+      // Listeners
       ['input', 'change'].forEach(evt => {
-        speedEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
-        delayEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
-        pointsEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
-        onTimeEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
-        sleepMinEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
-        sleepMaxEl.addEventListener(evt, () => { renderValues(); scheduleSettingsUpdate(); });
-
-        minPanEl.addEventListener(evt, scheduleBoundsUpdate);
-        maxPanEl.addEventListener(evt, scheduleBoundsUpdate);
-        minTiltEl.addEventListener(evt, scheduleBoundsUpdate);
-        maxTiltEl.addEventListener(evt, scheduleBoundsUpdate);
+        [els.speed, els.delay, els.points, els.onTime, els.sleepMin, els.sleepMax].forEach(el => 
+          el.addEventListener(evt, () => { renderValues(); scheduleSettings(); }));
+        [els.minPan, els.maxPan, els.minTilt, els.maxTilt].forEach(el => 
+          el.addEventListener(evt, scheduleBounds));
       });
 
-      // Poll countdown/status every second
+      els.togglePreview.onclick = () => setPreview(!isPreviewing);
+
+      document.querySelectorAll('.preview-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const axis = btn.dataset.axis, target = btn.dataset.target;
+          const val = parseInt(document.getElementById(target).value);
+          let pan, tilt;
+          if (axis === 'pan') {
+            pan = val;
+            tilt = Math.floor((parseInt(els.minTilt.value) + parseInt(els.maxTilt.value)) / 2);
+          } else {
+            pan = 110;
+            tilt = val;
+          }
+          if (!isPreviewing) await setPreview(true);
+          await api('/api/preview', { action: 'move', pan, tilt });
+        };
+      });
+
+      // Tab exit logic
+      document.getElementById('control-tab').addEventListener('show.bs.tab', () => {
+        if (isPreviewing) setPreview(false);
+      });
+
+      // Polling
       setInterval(async () => {
         try {
-          const res = await fetch('/api/settings');
-          if (res.ok) {
-            const data = await res.json();
-            statusTextEl.textContent = data.status || 'unknown';
-            onRemEl.textContent = fmt(data.on_remaining || 0);
-            breakRemEl.textContent = fmt(data.break_remaining || 0);
-          }
-        } catch (_) { /* ignore */ }
+          const data = await api('/api/settings');
+          els.statusText.textContent = data.status;
+          els.onRem.textContent = fmt(data.on_remaining);
+          els.breakRem.textContent = fmt(data.break_remaining);
+        } catch(e){}
       }, 1000);
 
-      // Initial load
+      // Init
       (async () => {
-        try {
-          const [settingsRes, boundsRes] = await Promise.all([
-            fetch('/api/settings'),
-            fetch('/api/bounds'),
-          ]);
-          if (settingsRes.ok) {
-            const data = await settingsRes.json();
-            applyFromSettings(data);
-            setStatus('Ready');
-          }
-          if (boundsRes.ok) {
-            const data = await boundsRes.json();
-            applyFromBounds(data);
-          }
-        } catch (_) { /* ignore */ }
+        const [s, b] = await Promise.all([api('/api/settings'), api('/api/bounds')]);
+        els.speed.value = s.speed; els.delay.value = s.delay; els.points.value = s.points;
+        els.onTime.value = s.on_time; els.sleepMin.value = s.sleep_min; els.sleepMax.value = s.sleep_max;
+        els.minPan.value = b.min_pan; els.maxPan.value = b.max_pan;
+        els.minTilt.value = b.min_tilt; els.maxTilt.value = b.max_tilt;
+        renderValues();
       })();
     })();
   </script>
-  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 </body>
 </html>
