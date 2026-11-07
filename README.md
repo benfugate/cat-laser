@@ -69,6 +69,7 @@ API:
 - Configuration (src/config.json):
   - `tilt_channel`, `pan_channel`
   - Optional: `*_pulse_min`, `*_pulse_max`
+  - Optional: `release_servos_when_idle` (default `true`) stops the servo signal between moves so they don't whine while holding still
 
 ### Systemd service (recommended on Raspberry Pi)
 - Example unit in `contrib/cat-laser.service`.

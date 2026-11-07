@@ -69,6 +69,10 @@ class Laser:
             except Exception:
                 pass
 
+        # Stop sending pulses between moves so the servos go quiet instead of
+        # whining while they hold position (the laser is too light to droop)
+        self.release_when_idle = bool(config.get("release_servos_when_idle", True))
+
         self.last_pan = 0
         self.last_tilt = 0
 
@@ -85,20 +89,31 @@ class Laser:
         time.sleep(1)
 
     def create_laser_path(self, pan, tilt):
-        pan_list = np.linspace(self.last_pan, pan, num=power.num_points)
-        tilt_list = np.linspace(self.last_tilt, tilt, num=power.num_points)
+        # Smoothstep easing: start and stop gently instead of at full speed
+        t = np.linspace(0, 1, num=power.num_points)
+        ease = t * t * (3 - 2 * t)
+        pan_list = self.last_pan + (pan - self.last_pan) * ease
+        tilt_list = self.last_tilt + (tilt - self.last_tilt) * ease
         delay = random.uniform(0, 0.1)
         for index in range(len(pan_list)):
             self.move_laser(pan_list[index], tilt_list[index])
             self.counter += 1
             print(f"Moving... {self.counter}")
             time.sleep(delay)
+        if self.release_when_idle:
+            time.sleep(0.15)  # let the servos finish settling first
+            self.release_servos()
+
+    def release_servos(self):
+        self.tilt.angle = None
+        self.pan.angle = None
 
     def move_laser(self, pan, tilt):
-        # Clamp and coerce to valid range and int to avoid out-of-range errors
+        # Clamp and coerce to valid range. Keep fractional degrees so paths
+        # move continuously rather than in 1 degree jumps.
         try:
-            pan = int(round(float(pan)))
-            tilt = int(round(float(tilt)))
+            pan = float(pan)
+            tilt = float(tilt)
         except Exception:
             # Fallback if conversion fails
             pan = 90
